@@ -61,8 +61,8 @@ export const loadData = async (): Promise<FinancasData> => {
 
   try {
     // Carregar receitas
-    const { data: receitasData, error: receitasError } = await supabase
-      .from('receitas')
+    const { data: receitasData, error: receitasError } = await (supabase
+      .from('receitas') as any)
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -80,8 +80,8 @@ export const loadData = async (): Promise<FinancasData> => {
     }
 
     // Carregar gastos no cartão
-    const { data: gastosCartaoData, error: gastosCartaoError } = await supabase
-      .from('gastos_cartao')
+    const { data: gastosCartaoData, error: gastosCartaoError } = await (supabase
+      .from('gastos_cartao') as any)
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -95,8 +95,8 @@ export const loadData = async (): Promise<FinancasData> => {
     }
 
     // Carregar gastos no débito
-    const { data: gastosDebitoData, error: gastosDebitoError } = await supabase
-      .from('gastos_debito')
+    const { data: gastosDebitoData, error: gastosDebitoError } = await (supabase
+      .from('gastos_debito') as any)
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -159,9 +159,9 @@ export const loadData = async (): Promise<FinancasData> => {
       
       // Remover do Supabase também
       try {
-        await supabase.from('receitas').delete().lt('mes', mesLimite);
-        await supabase.from('gastos_cartao').delete().lt('mes', mesLimite);
-        await supabase.from('gastos_debito').delete().lt('mes', mesLimite);
+        await (supabase.from('receitas') as any).delete().lt('mes', mesLimite);
+        await (supabase.from('gastos_cartao') as any).delete().lt('mes', mesLimite);
+        await (supabase.from('gastos_debito') as any).delete().lt('mes', mesLimite);
         console.info('✅ Dados antigos removidos do Supabase.');
       } catch (error) {
         console.warn('⚠️ Erro ao remover dados antigos do Supabase:', error);
@@ -209,8 +209,8 @@ export const saveData = async (data: FinancasData): Promise<void> => {
         updated_at: new Date().toISOString(),
       }));
 
-      const { error: receitasError } = await supabase
-        .from('receitas')
+      const { error: receitasError } = await (supabase
+        .from('receitas') as any)
         .upsert(receitasToSave, { onConflict: 'id' });
 
       if (receitasError) throw receitasError;
@@ -231,8 +231,8 @@ export const saveData = async (data: FinancasData): Promise<void> => {
         updated_at: new Date().toISOString(),
       }));
 
-      const { error: gastosCartaoError } = await supabase
-        .from('gastos_cartao')
+      const { error: gastosCartaoError } = await (supabase
+        .from('gastos_cartao') as any)
         .upsert(gastosCartaoToSave, { onConflict: 'id' });
 
       if (gastosCartaoError) throw gastosCartaoError;
@@ -249,8 +249,8 @@ export const saveData = async (data: FinancasData): Promise<void> => {
         updated_at: new Date().toISOString(),
       }));
 
-      const { error: gastosDebitoError } = await supabase
-        .from('gastos_debito')
+      const { error: gastosDebitoError } = await (supabase
+        .from('gastos_debito') as any)
         .upsert(gastosDebitoToSave, { onConflict: 'id' });
 
       if (gastosDebitoError) throw gastosDebitoError;
@@ -277,8 +277,8 @@ export const addReceita = async (receita: Receita): Promise<void> => {
   }
 
   try {
-    const { error } = await supabase
-      .from('receitas')
+    const { error } = await (supabase
+      .from('receitas') as any)
       .insert({
         id: receita.id,
         descricao: receita.descricao,
@@ -311,8 +311,8 @@ export const addGastoCartao = async (gasto: GastoCartao): Promise<void> => {
   }
 
   try {
-    const { error } = await supabase
-      .from('gastos_cartao')
+    const { error } = await (supabase
+      .from('gastos_cartao') as any)
       .insert({
         id: gasto.id,
         descricao: gasto.descricao,
@@ -347,8 +347,8 @@ export const addGastoDebito = async (gasto: GastoDebito): Promise<void> => {
   }
 
   try {
-    const { error } = await supabase
-      .from('gastos_debito')
+    const { error } = await (supabase
+      .from('gastos_debito') as any)
       .insert({
         id: gasto.id,
         descricao: gasto.descricao,
@@ -379,8 +379,8 @@ export const deleteReceita = async (id: string): Promise<void> => {
   }
 
   try {
-    const { error } = await supabase
-      .from('receitas')
+    const { error } = await (supabase
+      .from('receitas') as any)
       .delete()
       .eq('id', id);
 
@@ -406,8 +406,8 @@ export const deleteGastoCartao = async (id: string): Promise<void> => {
   }
 
   try {
-    const { error } = await supabase
-      .from('gastos_cartao')
+    const { error } = await (supabase
+      .from('gastos_cartao') as any)
       .delete()
       .eq('id', id);
 
@@ -433,8 +433,8 @@ export const deleteGastoDebito = async (id: string): Promise<void> => {
   }
 
   try {
-    const { error } = await supabase
-      .from('gastos_debito')
+    const { error } = await (supabase
+      .from('gastos_debito') as any)
       .delete()
       .eq('id', id);
 
@@ -462,8 +462,8 @@ export const updateGastoCartaoPago = async (id: string, pago: boolean): Promise<
   }
 
   try {
-    const { error } = await supabase
-      .from('gastos_cartao')
+    const { error } = await (supabase
+      .from('gastos_cartao') as any)
       .update({ pago, updated_at: new Date().toISOString() })
       .eq('id', id);
 
@@ -496,24 +496,24 @@ export const limparDadosAntigos = async (mesLimite: string): Promise<void> => {
 
   try {
     // Deletar receitas antigas
-    const { error: receitasError } = await supabase
-      .from('receitas')
+    const { error: receitasError } = await (supabase
+      .from('receitas') as any)
       .delete()
       .lt('mes', mesLimite);
 
     if (receitasError) throw receitasError;
 
     // Deletar gastos no cartão antigos
-    const { error: gastosCartaoError } = await supabase
-      .from('gastos_cartao')
+    const { error: gastosCartaoError } = await (supabase
+      .from('gastos_cartao') as any)
       .delete()
       .lt('mes', mesLimite);
 
     if (gastosCartaoError) throw gastosCartaoError;
 
     // Deletar gastos no débito antigos
-    const { error: gastosDebitoError } = await supabase
-      .from('gastos_debito')
+    const { error: gastosDebitoError } = await (supabase
+      .from('gastos_debito') as any)
       .delete()
       .lt('mes', mesLimite);
 
@@ -549,48 +549,48 @@ export const limparTodosDados = async (): Promise<void> => {
     // Isso garante que deletamos todos os registros, mesmo com RLS
     
     // Deletar TODAS as receitas
-    const { data: receitas, error: receitasSelectError } = await supabase
-      .from('receitas')
+    const { data: receitas, error: receitasSelectError } = await (supabase
+      .from('receitas') as any)
       .select('id');
     
     if (receitasSelectError) throw receitasSelectError;
     
     if (receitas && receitas.length > 0) {
-      const receitasIds = receitas.map(r => r.id);
-      const { error: receitasError } = await supabase
-        .from('receitas')
+      const receitasIds = receitas.map((r: any) => r.id);
+      const { error: receitasError } = await (supabase
+        .from('receitas') as any)
         .delete()
         .in('id', receitasIds);
       if (receitasError) throw receitasError;
     }
 
     // Deletar TODOS os gastos no cartão
-    const { data: gastosCartao, error: gastosCartaoSelectError } = await supabase
-      .from('gastos_cartao')
+    const { data: gastosCartao, error: gastosCartaoSelectError } = await (supabase
+      .from('gastos_cartao') as any)
       .select('id');
     
     if (gastosCartaoSelectError) throw gastosCartaoSelectError;
     
     if (gastosCartao && gastosCartao.length > 0) {
-      const gastosCartaoIds = gastosCartao.map(g => g.id);
-      const { error: gastosCartaoError } = await supabase
-        .from('gastos_cartao')
+      const gastosCartaoIds = gastosCartao.map((g: any) => g.id);
+      const { error: gastosCartaoError } = await (supabase
+        .from('gastos_cartao') as any)
         .delete()
         .in('id', gastosCartaoIds);
       if (gastosCartaoError) throw gastosCartaoError;
     }
 
     // Deletar TODOS os gastos no débito
-    const { data: gastosDebito, error: gastosDebitoSelectError } = await supabase
-      .from('gastos_debito')
+    const { data: gastosDebito, error: gastosDebitoSelectError } = await (supabase
+      .from('gastos_debito') as any)
       .select('id');
     
     if (gastosDebitoSelectError) throw gastosDebitoSelectError;
     
     if (gastosDebito && gastosDebito.length > 0) {
-      const gastosDebitoIds = gastosDebito.map(g => g.id);
-      const { error: gastosDebitoError } = await supabase
-        .from('gastos_debito')
+      const gastosDebitoIds = gastosDebito.map((g: any) => g.id);
+      const { error: gastosDebitoError } = await (supabase
+        .from('gastos_debito') as any)
         .delete()
         .in('id', gastosDebitoIds);
       if (gastosDebitoError) throw gastosDebitoError;

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { GastoCartao } from '../types';
-import { getMesAtual } from '../utils/calculations';
 import './Forms.css';
 
 interface GastosCartaoFormProps {
@@ -22,7 +21,6 @@ export default function GastosCartaoForm({ onAdd }: GastosCartaoFormProps) {
       valorTotal: parseFloat(valorTotal),
       parcelas: parseInt(parcelas),
       dataInicio,
-      mes: getMesAtual(),
     });
 
     setDescricao('');

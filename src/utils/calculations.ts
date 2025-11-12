@@ -63,13 +63,6 @@ export const calcularSaldoMensal = (
   };
 };
 
-const getMesesEntre = (mesInicio: string, mesFim: string): number => {
-  const [anoInicio, mesInicioNum] = mesInicio.split('-').map(Number);
-  const [anoFim, mesFimNum] = mesFim.split('-').map(Number);
-  
-  return (anoFim - anoInicio) * 12 + (mesFimNum - mesInicioNum);
-};
-
 export const getProximosMeses = (quantidade: number = 6): string[] => {
   const meses: string[] = [];
   const date = new Date();

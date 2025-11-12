@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FinancasData } from './types';
-import { loadData, saveData, addReceita, addGastoCartao, addGastoDebito, deleteReceita as deleteReceitaDB, deleteGastoCartao as deleteGastoCartaoDB, deleteGastoDebito as deleteGastoDebitoDB, updateGastoCartaoPago } from './utils/storage';
+import { loadData, addReceita, addGastoCartao, addGastoDebito, deleteReceita as deleteReceitaDB, deleteGastoCartao as deleteGastoCartaoDB, deleteGastoDebito as deleteGastoDebitoDB, updateGastoCartaoPago } from './utils/storage';
+import { GastoCartao } from './types';
 import ReceitasForm from './components/ReceitasForm';
 import GastosCartaoForm from './components/GastosCartaoForm';
 import GastosDebitoForm from './components/GastosDebitoForm';
@@ -56,7 +57,7 @@ function App() {
   };
 
   const handleAddGastoCartao = async (gasto: any) => {
-    const gastosParcelados = [];
+    const gastosParcelados: GastoCartao[] = [];
     const baseId = Date.now().toString();
     const dataInicio = new Date(gasto.dataInicio);
     
@@ -69,7 +70,7 @@ function App() {
       const mes = dataParcela.getMonth() + 1;
       const mesParcela = `${ano}-${String(mes).padStart(2, '0')}`;
       
-      const gastoParcelado = {
+      const gastoParcelado: GastoCartao = {
         ...gasto,
         id: `${baseId}-${i}`,
         parcelaAtual: i,
