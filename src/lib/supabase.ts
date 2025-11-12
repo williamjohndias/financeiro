@@ -1,11 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Nova API Key do Supabase (Publishable Key - segura para usar no browser)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://tmkrknkzgtppyylztida.supabase.co';
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_2DG1pydZMpDfcUOZZ_48kg_ycYSEWOr';
 
 // Verificar se a URL está completa e válida
-let supabase: ReturnType<typeof createClient> | null = null;
+let supabase: SupabaseClient<any, 'public', any> | null = null;
 let supabaseAvailable = false;
 
 try {
@@ -13,7 +13,7 @@ try {
     console.info('🔗 URL do Supabase:', supabaseUrl);
     console.info('🔑 Chave API configurada:', supabasePublishableKey.substring(0, 20) + '...');
     
-    supabase = createClient(supabaseUrl, supabasePublishableKey, {
+    supabase = createClient<any, 'public', any>(supabaseUrl, supabasePublishableKey, {
       auth: {
         persistSession: false,
       },
