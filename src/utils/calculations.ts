@@ -86,3 +86,63 @@ export const calcularProjecao = (
   return meses.map(mes => calcularSaldoMensal(mes, receitas, gastosCartao, gastosDebito));
 };
 
+export interface AnalisePagamento {
+  mes: string;
+  faturaTotal: number;
+  receitas: number;
+  saldoDisponivel: number;
+  podePagar: boolean;
+  percentualCobertura: number;
+  mesesRestantes: number;
+}
+
+export const analisarPagamentoFatura = (
+  mes: string,
+  receitas: Receita[],
+  gastosCartao: GastoCartao[],
+  gastosDebito: GastoDebito[],
+  mesesFuturos: string[]
+): AnalisePagamento => {
+  const saldoMes = calcularSaldoMensal(mes, receitas, gastosCartao, gastosDebito);
+  const faturaTotal = saldoMes.gastosCartao;
+  const receitasMes = saldoMes.receitas;
+  const saldoDisponivel = saldoMes.saldo;
+  const podePagar = saldoDisponivel >= 0;
+  const percentualCobertura = receitasMes > 0 ? (faturaTotal / receitasMes) * 100 : 0;
+
+  // Calcular quantos meses são necessários para pagar a fatura se não puder pagar este mês
+  let mesesRestantes = 0;
+  if (!podePagar && faturaTotal > 0) {
+    let saldoAcumulado = saldoDisponivel;
+    for (const mesFuturo of mesesFuturos) {
+      if (mesFuturo <= mes) continue;
+      const saldoFuturo = calcularSaldoMensal(mesFuturo, receitas, gastosCartao, gastosDebito);
+      saldoAcumulado += saldoFuturo.saldo;
+      mesesRestantes++;
+      if (saldoAcumulado >= faturaTotal) break;
+    }
+  }
+
+  return {
+    mes,
+    faturaTotal,
+    receitas: receitasMes,
+    saldoDisponivel,
+    podePagar,
+    percentualCobertura,
+    mesesRestantes,
+  };
+};
+
+export const getTodosMesesComDados = (
+  receitas: Receita[],
+  gastosCartao: GastoCartao[],
+  gastosDebito: GastoDebito[]
+): string[] => {
+  const meses = new Set<string>();
+  receitas.forEach(r => meses.add(r.mes));
+  gastosCartao.forEach(g => meses.add(g.mes));
+  gastosDebito.forEach(g => meses.add(g.mes));
+  return Array.from(meses).sort();
+};
+

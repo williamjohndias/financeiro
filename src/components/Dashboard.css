@@ -13,6 +13,8 @@
   border-radius: 12px;
   color: #ffffff;
   border: 1px solid #2a2a2a;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .dashboard-header h2 {
@@ -22,10 +24,56 @@
   letter-spacing: -0.3px;
 }
 
+.dashboard-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
 .mes-atual {
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.8);
   font-weight: 400;
+}
+
+.filtro-mes-dashboard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filtro-mes-dashboard label {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.filtro-mes-dashboard .select-mes {
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filtro-mes-dashboard .select-mes:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.filtro-mes-dashboard .select-mes:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.filtro-mes-dashboard .select-mes option {
+  background: #1a1a1a;
+  color: #ffffff;
 }
 
 .cards-grid {
@@ -186,6 +234,98 @@
   letter-spacing: -0.3px;
 }
 
+.analise-pagamento-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8e8e8;
+}
+
+.analise-pagamento-section h3 {
+  color: #1a1a1a;
+  margin-bottom: 24px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.analise-pagamento-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.analise-card {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.2s ease;
+}
+
+.analise-card:hover {
+  background: #f3f4f6;
+  border-color: #d0d0d0;
+}
+
+.analise-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.analise-info {
+  flex: 1;
+}
+
+.analise-info h4 {
+  color: #1a1a1a;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.analise-valor {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin: 8px 0;
+}
+
+.analise-valor strong {
+  color: #1a1a1a;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.analise-valor strong.positivo {
+  color: #10b981;
+}
+
+.analise-valor strong.negativo {
+  color: #ef4444;
+}
+
+.analise-status {
+  color: #1a1a1a;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 12px 0 8px 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  border-left: 4px solid #667eea;
+}
+
+.analise-detalhe {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 8px 0 0 0;
+  font-style: italic;
+}
+
 .meta-section {
   background: #1a1a1a;
   border-radius: 12px;
@@ -193,6 +333,17 @@
   color: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border: 1px solid #2a2a2a;
+}
+
+.meta-section ul {
+  margin: 16px 0 0 0;
+  padding-left: 24px;
+}
+
+.meta-section ul li {
+  margin: 8px 0;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .meta-section h3 {
@@ -237,6 +388,40 @@
     gap: 16px;
     text-align: center;
     padding: 20px 24px;
+  }
+
+  .dashboard-header-controls {
+    flex-direction: column;
+    width: 100%;
+    gap: 16px;
+  }
+
+  .filtro-mes-dashboard {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .filtro-mes-dashboard .select-mes {
+    width: 100%;
+  }
+
+  .analise-pagamento-section {
+    padding: 24px;
+  }
+
+  .analise-pagamento-section h3 {
+    font-size: 1.35rem;
+  }
+
+  .analise-card {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .analise-icon {
+    font-size: 2rem;
   }
 
   .dashboard-header h2 {
@@ -338,6 +523,41 @@
   .dashboard-header {
     padding: 20px 16px;
     border-radius: 8px;
+  }
+
+  .analise-pagamento-section {
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .analise-pagamento-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+  }
+
+  .analise-card {
+    padding: 16px;
+  }
+
+  .analise-info h4 {
+    font-size: 1.05rem;
+  }
+
+  .analise-valor {
+    font-size: 0.9rem;
+  }
+
+  .analise-valor strong {
+    font-size: 1.05rem;
+  }
+
+  .analise-status {
+    font-size: 0.95rem;
+    padding: 10px;
+  }
+
+  .analise-detalhe {
+    font-size: 0.85rem;
   }
 
   .dashboard-header h2 {
