@@ -4,6 +4,7 @@ import {
   getMesAtual, 
   getProximosMeses, 
   calcularProjecao, 
+  calcularSaldoMensal,
   formatMes,
   analisarPagamentoFatura,
   getTodosMesesComDados,
@@ -44,6 +45,7 @@ export default function Dashboard({ data }: DashboardProps) {
     cartao: true,
     debito: true,
   });
+  const [mesesComparacao, setMesesComparacao] = useState<string[]>([]);
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -68,6 +70,10 @@ export default function Dashboard({ data }: DashboardProps) {
     data.receitas,
     data.gastosCartao,
     data.gastosDebito
+  );
+  const mesesComparaveis = useMemo(
+    () => [...todosMesesComDados].reverse(),
+    [todosMesesComDados]
   );
   
   // Garantir que novembro/2025 esteja incluído se houver dados
@@ -205,6 +211,48 @@ export default function Dashboard({ data }: DashboardProps) {
     }));
   };
 
+  const comparacaoData = useMemo(
+    () =>
+      mesesComparacao.map(mes => {
+        const resumo = calcularSaldoMensal(
+          mes,
+          data.receitas,
+          gastosCartaoConsiderados,
+          data.gastosDebito
+        );
+        return {
+          ...resumo,
+          mesLabel: formatMes(mes),
+        };
+      }),
+    [mesesComparacao, data.receitas, gastosCartaoConsiderados, data.gastosDebito]
+  );
+
+  const podeComparar = comparacaoData.length >= 2;
+  const maiorSaldoComparado =
+    comparacaoData.length > 0
+      ? Math.max(...comparacaoData.map(item => item.saldo))
+      : 0;
+  const menorSaldoComparado =
+    comparacaoData.length > 0
+      ? Math.min(...comparacaoData.map(item => item.saldo))
+      : 0;
+
+  const handleToggleComparacao = (mes: string) => {
+    setMesesComparacao(prev => {
+      if (prev.includes(mes)) {
+        return prev.filter(item => item !== mes);
+      }
+      if (prev.length >= 4) {
+        const [, ...rest] = prev;
+        return [...rest, mes];
+      }
+      return [...prev, mes];
+    });
+  };
+
+  const limparComparacao = () => setMesesComparacao([]);
+
   // Encontrar meses críticos (saldo negativo)
   const mesesCriticos = saldoAcumulado.filter(m => m.saldo < 0);
   
@@ -281,6 +329,45 @@ export default function Dashboard({ data }: DashboardProps) {
         </div>
       </div>
 
+      {mesesComparaveis.length > 0 && (
+        <div className="dashboard-compare-panel">
+          <div className="dashboard-compare-header">
+            <div>
+              <h3>Comparar meses (até 4)</h3>
+              <p>Escolha meses específicos para colocar indicadores lado a lado.</p>
+            </div>
+            {mesesComparacao.length > 0 && (
+              <button className="dashboard-clear-button" onClick={limparComparacao}>
+                Limpar seleção
+              </button>
+            )}
+          </div>
+          <div className="compare-chips">
+            {mesesComparaveis.slice(0, 12).map(mes => {
+              const selected = mesesComparacao.includes(mes);
+              return (
+                <button
+                  key={mes}
+                  className={`compare-chip ${selected ? 'selected' : ''}`}
+                  onClick={() => handleToggleComparacao(mes)}
+                  type="button"
+                >
+                  {formatMes(mes)}
+                </button>
+              );
+            })}
+          </div>
+          <p className="compare-hint">
+            {mesesComparacao.length === 0 &&
+              'Selecione pelo menos dois meses para gerar o comparativo.'}
+            {mesesComparacao.length === 1 &&
+              'Escolha mais um mês para habilitar a comparação.'}
+            {mesesComparacao.length > 1 &&
+              `Comparando ${mesesComparacao.length} meses. Você pode selecionar até quatro.`}
+          </p>
+        </div>
+      )}
+
       <div className="cards-grid">
         <div className="stat-card receitas">
           <div className="stat-icon">💰</div>
@@ -318,6 +405,57 @@ export default function Dashboard({ data }: DashboardProps) {
           </div>
         </div>
       </div>
+
+      {podeComparar && (
+        <div className="comparison-panel">
+          <div className="comparison-panel__header">
+            <div>
+              <h3>Resumo dos meses selecionados</h3>
+              <p>Compare receitas, gastos e saldo para tomar decisões rápidas.</p>
+            </div>
+            <button className="dashboard-clear-button outline" onClick={limparComparacao}>
+              Reiniciar comparação
+            </button>
+          </div>
+          <div className="comparison-table-wrapper">
+            <table className="comparison-table">
+              <thead>
+                <tr>
+                  <th>Mês</th>
+                  <th className="align-right">Receitas</th>
+                  <th className="align-right">Cartão</th>
+                  <th className="align-right">Débito</th>
+                  <th className="align-right">Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparacaoData.map(item => {
+                  const isMelhor =
+                    item.saldo === maiorSaldoComparado &&
+                    maiorSaldoComparado !== menorSaldoComparado;
+                  const isPior =
+                    item.saldo === menorSaldoComparado &&
+                    maiorSaldoComparado !== menorSaldoComparado;
+                  return (
+                    <tr
+                      key={item.mes}
+                      className={`${item.saldo >= 0 ? 'positivo' : 'negativo'} ${
+                        isMelhor ? 'comparison-best' : isPior ? 'comparison-worst' : ''
+                      }`}
+                    >
+                      <td>{item.mesLabel}</td>
+                      <td className="align-right">{formatCurrency(item.receitas)}</td>
+                      <td className="align-right">{formatCurrency(item.gastosCartao)}</td>
+                      <td className="align-right">{formatCurrency(item.gastosDebito)}</td>
+                      <td className="align-right">{formatCurrency(item.saldo)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="projecao-section">
         <h3>📈 Projeção dos Próximos 6 Meses</h3>

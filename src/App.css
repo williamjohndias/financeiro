@@ -11,8 +11,8 @@
 
 .sheet-topbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
   padding: 18px 32px;
   border-bottom: 1px solid #e0e4ea;
   background: linear-gradient(90deg, #f8fbff 0%, #eef3ff 100%);
@@ -23,7 +23,6 @@
   align-items: center;
   gap: 16px;
 }
-
 .sheet-doc-icon {
   width: 44px;
   height: 44px;
@@ -50,73 +49,20 @@
   color: #202124;
 }
 
-.sheet-topbar__actions {
+.sheet-tabbar {
   display: flex;
   gap: 12px;
-}
-
-.ghost-button,
-.primary-button {
-  border-radius: 999px;
-  padding: 10px 20px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: transparent;
-}
-
-.ghost-button {
-  border-color: #d2e3fc;
-  color: #1a73e8;
-}
-
-.ghost-button:hover {
-  background: #e8f0fe;
-}
-
-.primary-button {
-  background: #1a73e8;
-  color: #ffffff;
-  border-color: #1a73e8;
-  box-shadow: 0 3px 8px rgba(26, 115, 232, 0.3);
-}
-
-.primary-button:hover {
-  background: #155cc4;
-}
-
-.sheet-body {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  min-height: 0;
-  flex: 1;
-}
-
-.sheet-tabs {
-  background: #f8fafc;
-  border-right: 1px solid #e0e4ea;
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.sheet-tabs__label {
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.15em;
-  color: #94a3b8;
-  margin-bottom: 8px;
+  padding: 12px 24px;
+  border-bottom: 1px solid #e0e4ea;
+  background: #f7f9fc;
+  flex-wrap: wrap;
 }
 
 .sheet-tab {
   background: transparent;
   border: none;
-  text-align: left;
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
@@ -125,7 +71,7 @@
 
 .sheet-tab:hover {
   background: #e2e8f0;
-  transform: translateX(2px);
+  transform: translateY(-1px);
 }
 
 .sheet-tab.active {
@@ -138,6 +84,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex: 1;
 }
 
 .sheet-toolbar {
@@ -286,27 +233,9 @@
   height: 100%;
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
-  .sheet-body {
-    grid-template-columns: 1fr;
-  }
-
-  .sheet-tabs {
-    flex-direction: row;
-    align-items: center;
-    border-right: none;
-    border-bottom: 1px solid #e0e4ea;
-    overflow-x: auto;
-  }
-
-  .sheet-tabs__label {
-    display: none;
-  }
-
-  .sheet-tab {
-    flex: 1;
-    text-align: center;
+  .sheet-tabbar {
+    justify-content: flex-start;
   }
 
   .sheet-grid {
@@ -318,12 +247,6 @@
   .sheet-shell {
     border-radius: 12px;
     min-height: calc(100vh - 20px);
-  }
-
-  .sheet-topbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
   }
 
   .sheet-toolbar {
@@ -351,6 +274,12 @@
 
   .sheet-topbar {
     padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sheet-tabbar {
+    padding: 12px 16px;
   }
 
   .sheet-toolbar {

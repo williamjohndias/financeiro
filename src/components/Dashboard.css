@@ -107,6 +107,162 @@
   box-shadow: 0 4px 10px rgba(26, 115, 232, 0.2);
 }
 
+.dashboard-compare-panel {
+  margin: 16px 0;
+  padding: 20px 28px;
+  border: 1px solid #dbe2ef;
+  border-radius: 12px;
+  background: #f8fbff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-compare-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dashboard-compare-panel h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #1f2933;
+}
+
+.dashboard-compare-panel p {
+  margin: 4px 0 0 0;
+  color: #5f6368;
+  font-size: 0.9rem;
+}
+
+.dashboard-clear-button {
+  border: none;
+  background: transparent;
+  color: #1a73e8;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.dashboard-clear-button:hover {
+  background: rgba(26, 115, 232, 0.08);
+}
+
+.dashboard-clear-button.outline {
+  border: 1px solid #d1d7e6;
+  background: #fff;
+  color: #1f2933;
+}
+
+.compare-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.compare-chip {
+  border: 1px solid #cbd5f5;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: #fff;
+  color: #1f2933;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.compare-chip.selected {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.25);
+}
+
+.compare-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.compare-hint {
+  font-size: 0.85rem;
+  color: #5f6368;
+  margin: 0;
+}
+
+.comparison-panel {
+  border: 1px solid #dbe2ef;
+  border-radius: 12px;
+  padding: 24px 28px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.comparison-panel__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.comparison-panel__header h3 {
+  margin: 0;
+  color: #1f2933;
+}
+
+.comparison-panel__header p {
+  margin: 4px 0 0 0;
+  color: #5f6368;
+  font-size: 0.9rem;
+}
+
+.comparison-table-wrapper {
+  overflow-x: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #edf0f5;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.comparison-table th {
+  background: #f6f8fc;
+  font-weight: 600;
+  color: #475569;
+}
+
+.comparison-table tr.positivo td:last-child {
+  color: #0f9d58;
+}
+
+.comparison-table tr.negativo td:last-child {
+  color: #d93025;
+}
+
+.comparison-best {
+  background: #ecfdf5;
+}
+
+.comparison-worst {
+  background: #fff5f5;
+}
+
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -432,6 +588,15 @@
     text-align: center;
   }
 
+  .dashboard-compare-panel,
+  .comparison-panel {
+    padding: 20px;
+  }
+
+  .comparison-table {
+    min-width: 520px;
+  }
+
   .analise-pagamento-section {
     padding: 24px;
   }
@@ -591,6 +756,15 @@
 
   .dashboard-chip {
     flex: 1 1 100%;
+  }
+
+  .dashboard-compare-panel,
+  .comparison-panel {
+    padding: 16px;
+  }
+
+  .comparison-table {
+    min-width: 420px;
   }
 
   .mes-atual {

@@ -188,128 +188,119 @@ function App() {
     <div className="sheet-shell">
       <header className="sheet-topbar">
         <div className="sheet-topbar__left">
-          <div className="sheet-doc-icon">📄</div>
+          <div className="sheet-doc-icon">📊</div>
           <div>
-            <p className="sheet-doc-label">Financeiro pessoal</p>
-            <h1>Planilha Orçamentária Viva</h1>
+            <p className="sheet-doc-label">Visão financeira</p>
+            <h1>Painel de Controle</h1>
           </div>
-        </div>
-        <div className="sheet-topbar__actions">
-          <button className="ghost-button" onClick={() => window.location.reload()}>
-            Atualizar dados
-          </button>
-          <button className="primary-button">Compartilhar</button>
         </div>
       </header>
 
-      <div className="sheet-body">
-        <aside className="sheet-tabs">
-          <p className="sheet-tabs__label">Guias</p>
-          {(['dashboard', 'receitas', 'gastos'] as TabKey[]).map(tab => (
-            <button
-              key={tab}
-              className={`sheet-tab ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              <span>{tabLabels[tab]}</span>
-            </button>
-          ))}
-        </aside>
+      <nav className="sheet-tabbar">
+        {(['dashboard', 'receitas', 'gastos'] as TabKey[]).map(tab => (
+          <button
+            key={tab}
+            className={`sheet-tab ${activeTab === tab ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tabLabels[tab]}
+          </button>
+        ))}
+      </nav>
 
-        <section className="sheet-main">
-          <div className="sheet-toolbar">
-            <div>
-              <span className="sheet-breadcrumb">Meu Drive &gt; Financeiro</span>
-              <h2>{tabLabels[activeTab]}</h2>
-              <p className="sheet-toolbar__hint">
-                Experiência visual inspirada no Google Sheets com filtros em tempo real.
-              </p>
+      <section className="sheet-main">
+        <div className="sheet-toolbar">
+          <div>
+            <span className="sheet-breadcrumb">Finanças &gt; {tabLabels[activeTab]}</span>
+            <h2>{tabLabels[activeTab]}</h2>
+            <p className="sheet-toolbar__hint">
+              Visual minimalista inspirado em planilhas para facilitar sua leitura.
+            </p>
+          </div>
+          <div className="sheet-toolbar__stats">
+            <div className="sheet-chip receitas">
+              <span>Receitas</span>
+              <strong>
+                {totalReceitas.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
+              </strong>
             </div>
-            <div className="sheet-toolbar__stats">
-              <div className="sheet-chip receitas">
-                <span>Receitas</span>
-                <strong>
-                  {totalReceitas.toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  })}
-                </strong>
-              </div>
-              <div className="sheet-chip cartao">
-                <span>Cartão</span>
-                <strong>
-                  {totalCartao.toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  })}
-                </strong>
-              </div>
-              <div className="sheet-chip debito">
-                <span>Débito</span>
-                <strong>
-                  {totalDebito.toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  })}
-                </strong>
-              </div>
-              <div className={`sheet-chip saldo ${saldoGeral >= 0 ? 'positivo' : 'negativo'}`}>
-                <span>Saldo Geral</span>
-                <strong>
-                  {saldoGeral.toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  })}
-                </strong>
-              </div>
+            <div className="sheet-chip cartao">
+              <span>Cartão</span>
+              <strong>
+                {totalCartao.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
+              </strong>
+            </div>
+            <div className="sheet-chip debito">
+              <span>Débito</span>
+              <strong>
+                {totalDebito.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
+              </strong>
+            </div>
+            <div className={`sheet-chip saldo ${saldoGeral >= 0 ? 'positivo' : 'negativo'}`}>
+              <span>Saldo Geral</span>
+              <strong>
+                {saldoGeral.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
+              </strong>
             </div>
           </div>
+        </div>
 
-          <div className="sheet-content">
-            {loading ? (
-              <div className="sheet-loading">
-                <div className="sheet-loading__spinner" />
-                <p>Carregando dados...</p>
-              </div>
-            ) : (
-              <>
-                {activeTab === 'dashboard' && <Dashboard data={data} />}
+        <div className="sheet-content">
+          {loading ? (
+            <div className="sheet-loading">
+              <div className="sheet-loading__spinner" />
+              <p>Carregando dados...</p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'dashboard' && <Dashboard data={data} />}
 
-                {activeTab === 'receitas' && (
-                  <div className="sheet-grid">
-                    <div className="sheet-panel sheet-panel--form">
-                      <ReceitasForm onAdd={handleAddReceita} />
-                    </div>
-                    <div className="sheet-panel sheet-panel--table">
-                      <ListaReceitas receitas={data.receitas} onDelete={handleDeleteReceita} />
+              {activeTab === 'receitas' && (
+                <div className="sheet-grid">
+                  <div className="sheet-panel sheet-panel--form">
+                    <ReceitasForm onAdd={handleAddReceita} />
+                  </div>
+                  <div className="sheet-panel sheet-panel--table">
+                    <ListaReceitas receitas={data.receitas} onDelete={handleDeleteReceita} />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'gastos' && (
+                <div className="sheet-grid sheet-grid--stacked">
+                  <div className="sheet-panel sheet-panel--form">
+                    <div className="forms-grid">
+                      <GastosCartaoForm onAdd={handleAddGastoCartao} />
+                      <GastosDebitoForm onAdd={handleAddGastoDebito} />
                     </div>
                   </div>
-                )}
-
-                {activeTab === 'gastos' && (
-                  <div className="sheet-grid sheet-grid--stacked">
-                    <div className="sheet-panel sheet-panel--form">
-                      <div className="forms-grid">
-                        <GastosCartaoForm onAdd={handleAddGastoCartao} />
-                        <GastosDebitoForm onAdd={handleAddGastoDebito} />
-                      </div>
-                    </div>
-                    <div className="sheet-panel sheet-panel--table">
-                      <ListaGastos
-                        gastosCartao={data.gastosCartao}
-                        gastosDebito={data.gastosDebito}
-                        onDeleteCartao={handleDeleteGastoCartao}
-                        onDeleteDebito={handleDeleteGastoDebito}
-                        onTogglePago={handleTogglePago}
-                      />
-                    </div>
+                  <div className="sheet-panel sheet-panel--table">
+                    <ListaGastos
+                      gastosCartao={data.gastosCartao}
+                      gastosDebito={data.gastosDebito}
+                      onDeleteCartao={handleDeleteGastoCartao}
+                      onDeleteDebito={handleDeleteGastoDebito}
+                      onTogglePago={handleTogglePago}
+                    />
                   </div>
-                )}
-              </>
-            )}
-          </div>
-        </section>
-      </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
