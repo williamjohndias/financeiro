@@ -159,10 +159,86 @@
   color: #1f2933;
 }
 
-.compare-chips {
+.compare-actions {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  position: relative;
+}
+
+.compare-dropdown__trigger {
+  border: 1px solid #cbd5f5;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: #fff;
+  color: #1a73e8;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+}
+
+.compare-dropdown__trigger span {
+  font-size: 0.75rem;
+  color: #5f6368;
+  font-weight: 500;
+}
+
+.compare-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 280px;
+  background: #ffffff;
+  border: 1px solid #dbe2ef;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  padding: 16px;
+  z-index: 10;
+}
+
+.compare-dropdown__options {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.compare-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #1f2933;
+}
+
+.compare-dropdown__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #edf0f5;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.compare-dropdown__footer button {
+  flex: 1;
+  border: 1px solid #cbd5f5;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #f8fbff;
+  color: #1a73e8;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.compare-dropdown__footer button:last-child {
+  background: #1a73e8;
+  color: #fff;
+  border-color: #1a73e8;
 }
 
 .compare-chip {
@@ -181,6 +257,22 @@
   border-color: #1a73e8;
   color: #fff;
   box-shadow: 0 4px 12px rgba(26, 115, 232, 0.25);
+}
+
+.compare-chip.removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.compare-chip.removable span {
+  font-weight: 700;
+}
+
+.compare-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .compare-chip:disabled {
@@ -421,6 +513,43 @@
   letter-spacing: -0.3px;
 }
 
+.charts-module {
+  margin-top: 24px;
+  border: 1px solid #e0e4ea;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  padding: 20px 24px;
+}
+
+.chart-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chart-tab-button {
+  border: 1px solid #d1d7e6;
+  border-radius: 999px;
+  padding: 8px 18px;
+  background: #f7f9fc;
+  color: #4b5563;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chart-tab-button.active {
+  background: #1a73e8;
+  color: #fff;
+  border-color: #1a73e8;
+  box-shadow: 0 6px 16px rgba(26, 115, 232, 0.25);
+}
+
+.chart-tab-content {
+  margin-top: 16px;
+}
+
 .analise-pagamento-section {
   background: #ffffff;
   border-radius: 12px;
@@ -593,6 +722,29 @@
     padding: 20px;
   }
 
+  .compare-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .compare-dropdown__trigger {
+    width: 100%;
+  }
+
+  .charts-module {
+    padding: 16px;
+  }
+
+  .chart-tabs {
+    flex-direction: column;
+  }
+
+  .chart-tab-button {
+    width: 100%;
+    text-align: center;
+  }
+
   .comparison-table {
     min-width: 520px;
   }
@@ -761,6 +913,15 @@
   .dashboard-compare-panel,
   .comparison-panel {
     padding: 16px;
+  }
+
+  .compare-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .chart-tab-button {
+    width: 100%;
   }
 
   .comparison-table {

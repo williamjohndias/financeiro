@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FinancasData, SaldoMensal } from '../types';
 import { 
   getMesAtual, 
@@ -35,6 +35,7 @@ interface DashboardProps {
 }
 
 type StatusCartaoFiltro = 'todos' | 'pagos' | 'abertos';
+type GraficoTab = 'comparativo' | 'distribuicao' | 'capacidade' | 'tendencia' | 'saldo' | 'parcelas';
 
 export default function Dashboard({ data }: DashboardProps) {
   const [mesFiltro, setMesFiltro] = useState<string>('');
@@ -46,6 +47,20 @@ export default function Dashboard({ data }: DashboardProps) {
     debito: true,
   });
   const [mesesComparacao, setMesesComparacao] = useState<string[]>([]);
+  const [dropdownAberto, setDropdownAberto] = useState(false);
+  const [abaGraficos, setAbaGraficos] = useState<GraficoTab>('comparativo');
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownAberto(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -198,6 +213,190 @@ export default function Dashboard({ data }: DashboardProps) {
     })
     .filter(item => item.Pagas > 0 || item.Abertas > 0);
 
+  const chartTabs = useMemo(() => {
+    const tabs: Array<{
+      id: GraficoTab;
+      label: string;
+      heading: string;
+      content: JSX.Element;
+      available?: boolean;
+    }> = [
+      {
+        id: 'comparativo',
+        label: 'Receitas x Gastos',
+        heading: 'Receitas vs Gastos por Mês',
+        content: (
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={dadosGrafico}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="mes" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Legend />
+              {seriesVisiveis.receitas && <Bar dataKey="Receitas" fill="#4caf50" />}
+              {seriesVisiveis.cartao && <Bar dataKey="Gastos Cartão" fill="#ff9800" />}
+              {seriesVisiveis.debito && <Bar dataKey="Gastos Débito" fill="#f44336" />}
+            </BarChart>
+          </ResponsiveContainer>
+        ),
+      },
+      {
+        id: 'distribuicao',
+        label: 'Distribuição Geral',
+        heading: 'Distribuição de Receitas e Gastos',
+        content: (
+          <ResponsiveContainer width="100%" height={320}>
+            <PieChart>
+              <Pie
+                data={dadosDistribuicao}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={70}
+                outerRadius={110}
+                paddingAngle={4}
+              >
+                {dadosDistribuicao.map((entry, index) => (
+                  <Cell key={entry.name} fill={coresDistribuicao[index % coresDistribuicao.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        ),
+      },
+      {
+        id: 'capacidade',
+        label: 'Capacidade da Fatura',
+        heading: 'Capacidade de Pagamento da Fatura',
+        content: (
+          <ResponsiveContainer width="100%" height={320}>
+            <ComposedChart data={dadosCapacidadePagamento}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="mes" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Legend />
+              <Bar dataKey="Fatura do Cartão" fill="#ff9800" />
+              <Bar dataKey="Receitas" fill="#4caf50" />
+              <Line
+                type="monotone"
+                dataKey="Saldo Disponível"
+                stroke="#667eea"
+                strokeWidth={3}
+                dot={{ fill: '#667eea', r: 5 }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        ),
+      },
+      {
+        id: 'tendencia',
+        label: 'Tendência de Saldo',
+        heading: 'Tendência de Saldo (Mensal e Acumulado)',
+        content: (
+          <ResponsiveContainer width="100%" height={320}>
+            <AreaChart data={dadosTendencia}>
+              <defs>
+                <linearGradient id="colorSaldoMensal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#667eea" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#667eea" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorSaldoAcumulado" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#764ba2" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#764ba2" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="mes" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Legend />
+              <Area
+                type="monotone"
+                dataKey="Saldo Mensal"
+                stroke="#667eea"
+                fillOpacity={1}
+                fill="url(#colorSaldoMensal)"
+              />
+              <Line
+                type="monotone"
+                dataKey="Saldo Acumulado"
+                stroke="#764ba2"
+                strokeWidth={3}
+                dot={{ fill: '#764ba2', r: 5 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ),
+      },
+      {
+        id: 'saldo',
+        label: 'Saldo Projetado',
+        heading: 'Saldo Acumulado (Projeção)',
+        content: (
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={dadosSaldoAcumulado}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="mes" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="Saldo Acumulado"
+                stroke="#764ba2"
+                strokeWidth={3}
+                dot={{ fill: '#764ba2', r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ),
+      },
+      {
+        id: 'parcelas',
+        label: 'Parcelas do Cartão',
+        heading: 'Status das Parcelas do Cartão',
+        content: (
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={statusParcelasPorMes}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="mes" />
+              <YAxis />
+              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Legend />
+              <Bar dataKey="Pagas" stackId="a" fill="#34a853" />
+              <Bar dataKey="Abertas" stackId="a" fill="#ea4335" />
+            </BarChart>
+          </ResponsiveContainer>
+        ),
+        available: statusParcelasPorMes.length > 0,
+      },
+    ];
+
+    return tabs.filter(tab => tab.available !== false);
+  }, [
+    dadosGrafico,
+    dadosDistribuicao,
+    dadosCapacidadePagamento,
+    dadosTendencia,
+    dadosSaldoAcumulado,
+    statusParcelasPorMes,
+    seriesVisiveis,
+  ]);
+
+  useEffect(() => {
+    if (!chartTabs.length) {
+      return;
+    }
+
+    if (!chartTabs.some(tab => tab.id === abaGraficos)) {
+      setAbaGraficos(chartTabs[0].id);
+    }
+  }, [chartTabs, abaGraficos]);
+
+  const graficoAtivo = chartTabs.find(tab => tab.id === abaGraficos) || chartTabs[0];
+
   const chipLabels: Record<keyof typeof seriesVisiveis, string> = {
     receitas: 'Receitas',
     cartao: 'Gastos Cartão',
@@ -239,16 +438,9 @@ export default function Dashboard({ data }: DashboardProps) {
       : 0;
 
   const handleToggleComparacao = (mes: string) => {
-    setMesesComparacao(prev => {
-      if (prev.includes(mes)) {
-        return prev.filter(item => item !== mes);
-      }
-      if (prev.length >= 4) {
-        const [, ...rest] = prev;
-        return [...rest, mes];
-      }
-      return [...prev, mes];
-    });
+    setMesesComparacao(prev =>
+      prev.includes(mes) ? prev.filter(item => item !== mes) : [...prev, mes]
+    );
   };
 
   const limparComparacao = () => setMesesComparacao([]);
@@ -333,37 +525,73 @@ export default function Dashboard({ data }: DashboardProps) {
         <div className="dashboard-compare-panel">
           <div className="dashboard-compare-header">
             <div>
-              <h3>Comparar meses (até 4)</h3>
-              <p>Escolha meses específicos para colocar indicadores lado a lado.</p>
+              <h3>Comparar meses</h3>
+              <p>Use o menu suspenso para escolher quantos meses quiser analisar.</p>
             </div>
-            {mesesComparacao.length > 0 && (
-              <button className="dashboard-clear-button" onClick={limparComparacao}>
-                Limpar seleção
-              </button>
-            )}
-          </div>
-          <div className="compare-chips">
-            {mesesComparaveis.slice(0, 12).map(mes => {
-              const selected = mesesComparacao.includes(mes);
-              return (
-                <button
-                  key={mes}
-                  className={`compare-chip ${selected ? 'selected' : ''}`}
-                  onClick={() => handleToggleComparacao(mes)}
-                  type="button"
-                >
-                  {formatMes(mes)}
+            <div className="compare-actions" ref={dropdownRef}>
+              {mesesComparacao.length > 0 && (
+                <button className="dashboard-clear-button" onClick={limparComparacao}>
+                  Limpar seleção
                 </button>
-              );
-            })}
+              )}
+              <button
+                className="compare-dropdown__trigger"
+                onClick={() => setDropdownAberto(prev => !prev)}
+                type="button"
+              >
+                Selecionar meses
+                <span>{mesesComparacao.length} selecionado(s)</span>
+              </button>
+              {dropdownAberto && (
+                <div className="compare-dropdown">
+                  <div className="compare-dropdown__options">
+                    {mesesComparaveis.map(mes => (
+                      <label key={mes} className="compare-option">
+                        <input
+                          type="checkbox"
+                          checked={mesesComparacao.includes(mes)}
+                          onChange={() => handleToggleComparacao(mes)}
+                        />
+                        {formatMes(mes)}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="compare-dropdown__footer">
+                    <button type="button" onClick={limparComparacao}>
+                      Limpar tudo
+                    </button>
+                    <button type="button" onClick={() => setDropdownAberto(false)}>
+                      Concluir
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
+          {mesesComparacao.length > 0 && (
+            <div className="compare-selected">
+              {mesesComparacao.map(mes => (
+                <button
+                  type="button"
+                  key={mes}
+                  className="compare-chip selected removable"
+                  onClick={() => handleToggleComparacao(mes)}
+                  title="Remover mês da comparação"
+                >
+                  {formatMes(mes)} <span>×</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <p className="compare-hint">
             {mesesComparacao.length === 0 &&
-              'Selecione pelo menos dois meses para gerar o comparativo.'}
+              'Selecione dois ou mais meses para habilitar a comparação.'}
             {mesesComparacao.length === 1 &&
-              'Escolha mais um mês para habilitar a comparação.'}
+              'Escolha mais um mês para comparar os indicadores.'}
             {mesesComparacao.length > 1 &&
-              `Comparando ${mesesComparacao.length} meses. Você pode selecionar até quatro.`}
+              `Comparando ${mesesComparacao.length} meses. Clique em um chip para removê-lo.`}
           </p>
         </div>
       )}
@@ -508,140 +736,28 @@ export default function Dashboard({ data }: DashboardProps) {
         </div>
       </div>
 
-      <div className="charts-container">
-        <div className="chart-card">
-          <h3>Receitas vs Gastos por Mês</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dadosGrafico}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
-              <Legend />
-              {seriesVisiveis.receitas && <Bar dataKey="Receitas" fill="#4caf50" />}
-              {seriesVisiveis.cartao && <Bar dataKey="Gastos Cartão" fill="#ff9800" />}
-              {seriesVisiveis.debito && <Bar dataKey="Gastos Débito" fill="#f44336" />}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-card">
-          <h3>Distribuição Geral</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie
-                data={dadosDistribuicao}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={4}
+      {chartTabs.length > 0 && graficoAtivo && (
+        <div className="charts-module">
+          <div className="chart-tabs">
+            {chartTabs.map(tab => (
+              <button
+                key={tab.id}
+                className={`chart-tab-button ${abaGraficos === tab.id ? 'active' : ''}`}
+                onClick={() => setAbaGraficos(tab.id)}
+                type="button"
               >
-                {dadosDistribuicao.map((entry, index) => (
-                  <Cell key={entry.name} fill={coresDistribuicao[index % coresDistribuicao.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-card">
-          <h3>Capacidade de Pagamento da Fatura</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={dadosCapacidadePagamento}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
-              <Legend />
-              <Bar dataKey="Fatura do Cartão" fill="#ff9800" />
-              <Bar dataKey="Receitas" fill="#4caf50" />
-              <Line 
-                type="monotone" 
-                dataKey="Saldo Disponível" 
-                stroke="#667eea" 
-                strokeWidth={3}
-                dot={{ fill: '#667eea', r: 5 }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-card">
-          <h3>Tendência de Saldo (Mensal e Acumulado)</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={dadosTendencia}>
-              <defs>
-                <linearGradient id="colorSaldoMensal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#667eea" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#667eea" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorSaldoAcumulado" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#764ba2" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#764ba2" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
-              <Legend />
-              <Area 
-                type="monotone" 
-                dataKey="Saldo Mensal" 
-                stroke="#667eea" 
-                fillOpacity={1} 
-                fill="url(#colorSaldoMensal)" 
-              />
-              <Line
-                type="monotone"
-                dataKey="Saldo Acumulado"
-                stroke="#764ba2"
-                strokeWidth={3}
-                dot={{ fill: '#764ba2', r: 5 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-card">
-          <h3>Saldo Acumulado (Projeção)</h3>
-        {statusParcelasPorMes.length > 0 && (
-          <div className="chart-card">
-            <h3>Status das Parcelas do Cartão</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={statusParcelasPorMes}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mes" />
-                <YAxis />
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                <Legend />
-                <Bar dataKey="Pagas" stackId="a" fill="#34a853" />
-                <Bar dataKey="Abertas" stackId="a" fill="#ea4335" />
-              </BarChart>
-            </ResponsiveContainer>
+                {tab.label}
+              </button>
+            ))}
           </div>
-        )}
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={dadosSaldoAcumulado}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="Saldo Acumulado"
-                stroke="#764ba2"
-                strokeWidth={3}
-                dot={{ fill: '#764ba2', r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="chart-tab-content">
+            <div className="chart-card">
+              <h3>{graficoAtivo.heading}</h3>
+              {graficoAtivo.content}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="meta-section">
         <h3>🎯 Análise e Recomendações</h3>
