@@ -587,175 +587,181 @@ export default function Dashboard({ data }: DashboardProps) {
       )}
 
       {paginaAtual === 'resumo' && (
-        <>
-          {mesesComparaveis.length > 0 && (
-            <div className="dashboard-compare-panel">
-              <div className="dashboard-compare-header">
-                <div>
-                  <h3>Comparar meses</h3>
-                  <p>Use o menu suspenso para escolher quantos meses quiser analisar.</p>
-                </div>
-                <div className="compare-actions" ref={dropdownRef}>
+        <div className="dashboard-page resumo">
+          <div className="resumo-layout">
+            <div className="resumo-left">
+              {mesesComparaveis.length > 0 && (
+                <div className="dashboard-compare-panel">
+                  <div className="dashboard-compare-header">
+                    <div>
+                      <h3>Comparar meses</h3>
+                      <p>Use o menu suspenso para escolher quantos meses quiser analisar.</p>
+                    </div>
+                    <div className="compare-actions" ref={dropdownRef}>
+                      {mesesComparacao.length > 0 && (
+                        <button className="dashboard-clear-button" onClick={limparComparacao}>
+                          Limpar seleção
+                        </button>
+                      )}
+                      <button
+                        className="compare-dropdown__trigger"
+                        onClick={() => setDropdownAberto(prev => !prev)}
+                        type="button"
+                      >
+                        Selecionar meses
+                        <span>{mesesComparacao.length} selecionado(s)</span>
+                      </button>
+                      {dropdownAberto && (
+                        <div className="compare-dropdown">
+                          <div className="compare-dropdown__options">
+                            {mesesComparaveis.map(mes => (
+                              <label key={mes} className="compare-option">
+                                <input
+                                  type="checkbox"
+                                  checked={mesesComparacao.includes(mes)}
+                                  onChange={() => handleToggleComparacao(mes)}
+                                />
+                                {formatMes(mes)}
+                              </label>
+                            ))}
+                          </div>
+                          <div className="compare-dropdown__footer">
+                            <button type="button" onClick={limparComparacao}>
+                              Limpar tudo
+                            </button>
+                            <button type="button" onClick={() => setDropdownAberto(false)}>
+                              Concluir
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {mesesComparacao.length > 0 && (
-                    <button className="dashboard-clear-button" onClick={limparComparacao}>
-                      Limpar seleção
-                    </button>
-                  )}
-                  <button
-                    className="compare-dropdown__trigger"
-                    onClick={() => setDropdownAberto(prev => !prev)}
-                    type="button"
-                  >
-                    Selecionar meses
-                    <span>{mesesComparacao.length} selecionado(s)</span>
-                  </button>
-                  {dropdownAberto && (
-                    <div className="compare-dropdown">
-                      <div className="compare-dropdown__options">
-                        {mesesComparaveis.map(mes => (
-                          <label key={mes} className="compare-option">
-                            <input
-                              type="checkbox"
-                              checked={mesesComparacao.includes(mes)}
-                              onChange={() => handleToggleComparacao(mes)}
-                            />
-                            {formatMes(mes)}
-                          </label>
-                        ))}
-                      </div>
-                      <div className="compare-dropdown__footer">
-                        <button type="button" onClick={limparComparacao}>
-                          Limpar tudo
+                    <div className="compare-selected">
+                      {mesesComparacao.map(mes => (
+                        <button
+                          type="button"
+                          key={mes}
+                          className="compare-chip selected removable"
+                          onClick={() => handleToggleComparacao(mes)}
+                          title="Remover mês da comparação"
+                        >
+                          {formatMes(mes)} <span>×</span>
                         </button>
-                        <button type="button" onClick={() => setDropdownAberto(false)}>
-                          Concluir
-                        </button>
-                      </div>
+                      ))}
                     </div>
                   )}
-                </div>
-              </div>
 
-              {mesesComparacao.length > 0 && (
-                <div className="compare-selected">
-                  {mesesComparacao.map(mes => (
-                    <button
-                      type="button"
-                      key={mes}
-                      className="compare-chip selected removable"
-                      onClick={() => handleToggleComparacao(mes)}
-                      title="Remover mês da comparação"
-                    >
-                      {formatMes(mes)} <span>×</span>
-                    </button>
-                  ))}
+                  <p className="compare-hint">
+                    {mesesComparacao.length === 0 &&
+                      'Selecione dois ou mais meses para habilitar a comparação.'}
+                    {mesesComparacao.length === 1 &&
+                      'Escolha mais um mês para comparar os indicadores.'}
+                    {mesesComparacao.length > 1 &&
+                      `Comparando ${mesesComparacao.length} meses. Clique em um chip para removê-lo.`}
+                  </p>
                 </div>
               )}
 
-              <p className="compare-hint">
-                {mesesComparacao.length === 0 &&
-                  'Selecione dois ou mais meses para habilitar a comparação.'}
-                {mesesComparacao.length === 1 &&
-                  'Escolha mais um mês para comparar os indicadores.'}
-                {mesesComparacao.length > 1 &&
-                  `Comparando ${mesesComparacao.length} meses. Clique em um chip para removê-lo.`}
-              </p>
+              {podeComparar && (
+                <div className="comparison-panel">
+                  <div className="comparison-panel__header">
+                    <div>
+                      <h3>Resumo dos meses selecionados</h3>
+                      <p>Compare receitas, gastos e saldo para tomar decisões rápidas.</p>
+                    </div>
+                    <button className="dashboard-clear-button outline" onClick={limparComparacao}>
+                      Reiniciar comparação
+                    </button>
+                  </div>
+                  <div className="comparison-table-wrapper">
+                    <table className="comparison-table">
+                      <thead>
+                        <tr>
+                          <th>Mês</th>
+                          <th className="align-right">Receitas</th>
+                          <th className="align-right">Cartão</th>
+                          <th className="align-right">Débito</th>
+                          <th className="align-right">Saldo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {comparacaoData.map(item => {
+                          const isMelhor =
+                            item.saldo === maiorSaldoComparado &&
+                            maiorSaldoComparado !== menorSaldoComparado;
+                          const isPior =
+                            item.saldo === menorSaldoComparado &&
+                            maiorSaldoComparado !== menorSaldoComparado;
+                          return (
+                            <tr
+                              key={item.mes}
+                              className={`${item.saldo >= 0 ? 'positivo' : 'negativo'} ${
+                                isMelhor ? 'comparison-best' : isPior ? 'comparison-worst' : ''
+                              }`}
+                            >
+                              <td>{item.mesLabel}</td>
+                              <td className="align-right">{formatCurrency(item.receitas)}</td>
+                              <td className="align-right">{formatCurrency(item.gastosCartao)}</td>
+                              <td className="align-right">{formatCurrency(item.gastosDebito)}</td>
+                              <td className="align-right">{formatCurrency(item.saldo)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
 
-          <div className="cards-grid">
-            <div className="stat-card receitas">
-              <div className="stat-icon">💰</div>
-              <div className="stat-content">
-                <h3>Receitas</h3>
-                <p className="stat-value">{formatCurrency(saldoAtual.receitas)}</p>
-                <p className="stat-label">Este mês</p>
-              </div>
-            </div>
+            <div className="resumo-right">
+              <div className="cards-grid resumo-cards">
+                <div className="stat-card receitas">
+                  <div className="stat-icon">💰</div>
+                  <div className="stat-content">
+                    <h3>Receitas</h3>
+                    <p className="stat-value">{formatCurrency(saldoAtual.receitas)}</p>
+                    <p className="stat-label">Este mês</p>
+                  </div>
+                </div>
 
-            <div className="stat-card gastos-cartao">
-              <div className="stat-icon">💳</div>
-              <div className="stat-content">
-                <h3>Gastos Cartão</h3>
-                <p className="stat-value">{formatCurrency(saldoAtual.gastosCartao)}</p>
-                <p className="stat-label">Este mês</p>
-              </div>
-            </div>
+                <div className="stat-card gastos-cartao">
+                  <div className="stat-icon">💳</div>
+                  <div className="stat-content">
+                    <h3>Gastos Cartão</h3>
+                    <p className="stat-value">{formatCurrency(saldoAtual.gastosCartao)}</p>
+                    <p className="stat-label">Este mês</p>
+                  </div>
+                </div>
 
-            <div className="stat-card gastos-debito">
-              <div className="stat-icon">💸</div>
-              <div className="stat-content">
-                <h3>Gastos Débito</h3>
-                <p className="stat-value">{formatCurrency(saldoAtual.gastosDebito)}</p>
-                <p className="stat-label">Este mês</p>
-              </div>
-            </div>
+                <div className="stat-card gastos-debito">
+                  <div className="stat-icon">💸</div>
+                  <div className="stat-content">
+                    <h3>Gastos Débito</h3>
+                    <p className="stat-value">{formatCurrency(saldoAtual.gastosDebito)}</p>
+                    <p className="stat-label">Este mês</p>
+                  </div>
+                </div>
 
-            <div className={`stat-card saldo ${saldoAtual.saldo >= 0 ? 'positivo' : 'negativo'}`}>
-              <div className="stat-icon">{saldoAtual.saldo >= 0 ? '✅' : '⚠️'}</div>
-              <div className="stat-content">
-                <h3>Saldo do Mês</h3>
-                <p className="stat-value">{formatCurrency(saldoAtual.saldo)}</p>
-                <p className="stat-label">Este mês</p>
+                <div className={`stat-card saldo ${saldoAtual.saldo >= 0 ? 'positivo' : 'negativo'}`}>
+                  <div className="stat-icon">{saldoAtual.saldo >= 0 ? '✅' : '⚠️'}</div>
+                  <div className="stat-content">
+                    <h3>Saldo do Mês</h3>
+                    <p className="stat-value">{formatCurrency(saldoAtual.saldo)}</p>
+                    <p className="stat-label">Este mês</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
-          {podeComparar && (
-            <div className="comparison-panel">
-              <div className="comparison-panel__header">
-                <div>
-                  <h3>Resumo dos meses selecionados</h3>
-                  <p>Compare receitas, gastos e saldo para tomar decisões rápidas.</p>
-                </div>
-                <button className="dashboard-clear-button outline" onClick={limparComparacao}>
-                  Reiniciar comparação
-                </button>
-              </div>
-              <div className="comparison-table-wrapper">
-                <table className="comparison-table">
-                  <thead>
-                    <tr>
-                      <th>Mês</th>
-                      <th className="align-right">Receitas</th>
-                      <th className="align-right">Cartão</th>
-                      <th className="align-right">Débito</th>
-                      <th className="align-right">Saldo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {comparacaoData.map(item => {
-                      const isMelhor =
-                        item.saldo === maiorSaldoComparado &&
-                        maiorSaldoComparado !== menorSaldoComparado;
-                      const isPior =
-                        item.saldo === menorSaldoComparado &&
-                        maiorSaldoComparado !== menorSaldoComparado;
-                      return (
-                        <tr
-                          key={item.mes}
-                          className={`${item.saldo >= 0 ? 'positivo' : 'negativo'} ${
-                            isMelhor ? 'comparison-best' : isPior ? 'comparison-worst' : ''
-                          }`}
-                        >
-                          <td>{item.mesLabel}</td>
-                          <td className="align-right">{formatCurrency(item.receitas)}</td>
-                          <td className="align-right">{formatCurrency(item.gastosCartao)}</td>
-                          <td className="align-right">{formatCurrency(item.gastosDebito)}</td>
-                          <td className="align-right">{formatCurrency(item.saldo)}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </>
+        </div>
       )}
 
       {paginaAtual === 'projecoes' && (
-        <>
+        <div className="dashboard-page projecoes">
           {chartTabs.length > 0 && graficoAtivo && (
             <div className="charts-module">
               <div className="chart-tabs">
@@ -800,11 +806,11 @@ export default function Dashboard({ data }: DashboardProps) {
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {paginaAtual === 'insights' && (
-        <>
+        <div className="dashboard-page insights">
           <div className="analise-pagamento-section">
             <h3>💳 Análise de Pagamento de Fatura</h3>
             <div className="analise-pagamento-content">
@@ -883,7 +889,7 @@ export default function Dashboard({ data }: DashboardProps) {
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

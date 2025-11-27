@@ -257,7 +257,7 @@ function App() {
           </div>
         </div>
 
-        <div className="sheet-content">
+        <div className={`sheet-content ${activeTab === 'dashboard' ? 'sheet-content--full' : ''}`}>
           {loading ? (
             <div className="sheet-loading">
               <div className="sheet-loading__spinner" />

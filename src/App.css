@@ -177,8 +177,22 @@
 
 .sheet-content {
   padding: 32px;
-  overflow: visible;
   background: #fefefe;
+  flex: 1;
+  min-height: 0;
+}
+
+.sheet-content--full {
+  height: calc(100vh - 220px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sheet-content--full > * {
+  flex: 1;
+  min-height: 0;
 }
 
 .sheet-loading {
