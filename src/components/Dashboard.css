@@ -513,6 +513,65 @@
   letter-spacing: -0.3px;
 }
 
+.dashboard-pages-nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 24px 0 6px;
+}
+
+.dashboard-pages-nav button {
+  border: 1px solid #cfd5e2;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-weight: 600;
+  background: #f5f7fb;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dashboard-pages-nav button.active {
+  background: #1a73e8;
+  color: #ffffff;
+  border-color: #1a73e8;
+  box-shadow: 0 6px 16px rgba(26, 115, 232, 0.25);
+}
+
+.dashboard-pages-hint {
+  margin: 0 0 20px;
+  color: #5f6368;
+  font-size: 0.9rem;
+}
+
+.insights-panel {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.insight-card {
+  border: 1px solid #dbe2ef;
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.insight-card h4 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: #1f2933;
+}
+
+.insight-card p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .charts-module {
   margin-top: 24px;
   border: 1px solid #e0e4ea;

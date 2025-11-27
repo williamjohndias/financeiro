@@ -36,6 +36,7 @@ interface DashboardProps {
 
 type StatusCartaoFiltro = 'todos' | 'pagos' | 'abertos';
 type GraficoTab = 'comparativo' | 'distribuicao' | 'capacidade' | 'tendencia' | 'saldo' | 'parcelas';
+type DashboardPage = 'resumo' | 'projecoes' | 'insights';
 
 export default function Dashboard({ data }: DashboardProps) {
   const [mesFiltro, setMesFiltro] = useState<string>('');
@@ -49,6 +50,7 @@ export default function Dashboard({ data }: DashboardProps) {
   const [mesesComparacao, setMesesComparacao] = useState<string[]>([]);
   const [dropdownAberto, setDropdownAberto] = useState(false);
   const [abaGraficos, setAbaGraficos] = useState<GraficoTab>('comparativo');
+  const [paginaAtual, setPaginaAtual] = useState<DashboardPage>('resumo');
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -87,7 +89,7 @@ export default function Dashboard({ data }: DashboardProps) {
     data.gastosDebito
   );
   const mesesComparaveis = useMemo(
-    () => [...todosMesesComDados].reverse(),
+    () => [...todosMesesComDados],
     [todosMesesComDados]
   );
   
@@ -212,6 +214,26 @@ export default function Dashboard({ data }: DashboardProps) {
       };
     })
     .filter(item => item.Pagas > 0 || item.Abertas > 0);
+
+  const paginasDashboard: Array<{ id: DashboardPage; label: string; descricao: string }> = [
+    {
+      id: 'resumo',
+      label: 'Resumo',
+      descricao: 'Visão geral dos cartões, receitas e comparações entre meses.',
+    },
+    {
+      id: 'projecoes',
+      label: 'Projeções e Gráficos',
+      descricao: 'Acompanhe projeções futuras e navegue entre os gráficos principais.',
+    },
+    {
+      id: 'insights',
+      label: 'Insights e Quitar Dívidas',
+      descricao: 'Receba recomendações para quitar despesas e equilibrar o fluxo de caixa.',
+    },
+  ];
+
+  const paginaAtivaInfo = paginasDashboard.find(page => page.id === paginaAtual);
 
   const chartTabs = useMemo(() => {
     const tabs: Array<{
@@ -397,6 +419,33 @@ export default function Dashboard({ data }: DashboardProps) {
 
   const graficoAtivo = chartTabs.find(tab => tab.id === abaGraficos) || chartTabs[0];
 
+  const valorParaQuitarMes = saldoAtual.saldo < 0 ? Math.abs(saldoAtual.saldo) : 0;
+  const coberturaCartao = saldoAtual.receitas > 0 ? (saldoAtual.gastosCartao / saldoAtual.receitas) * 100 : 0;
+  const valorFaturaFaltante = Math.max(0, mesAtualAnalise.faturaTotal - mesAtualAnalise.saldoDisponivel);
+
+  const insightsFinanceiros = [
+    {
+      titulo: valorParaQuitarMes > 0 ? 'Reforço necessário no mês atual' : 'Saldo mensal positivo',
+      descricao:
+        valorParaQuitarMes > 0
+          ? `Faltam ${formatCurrency(valorParaQuitarMes)} para quitar todas as despesas deste mês. Considere cortar gastos ou antecipar receitas para equilibrar o fluxo.`
+          : 'Seu saldo cobre todas as despesas do mês atual. Mantenha o ritmo e aproveite para criar reserva.',
+    },
+    {
+      titulo: 'Cobertura da fatura do cartão',
+      descricao:
+        coberturaCartao > 100
+          ? `A fatura consome ${coberturaCartao.toFixed(1)}% das receitas. Reduza compras parceladas para voltar a um patamar seguro.`
+          : `A fatura usa ${coberturaCartao.toFixed(1)}% das receitas. Você está dentro de um limite saudável.`,
+    },
+    {
+      titulo: mesAtualAnalise.podePagar ? 'Fatura sob controle' : 'Planeje pagamentos futuros',
+      descricao: mesAtualAnalise.podePagar
+        ? 'Você consegue pagar a fatura integralmente sem comprometer o saldo.'
+        : `Separe ${formatCurrency(valorFaturaFaltante)} e considere pausar novas compras até equilibrar o caixa (previsão de ${mesAtualAnalise.mesesRestantes} mês(es)).`,
+    },
+  ];
+
   const chipLabels: Record<keyof typeof seriesVisiveis, string> = {
     receitas: 'Receitas',
     cartao: 'Gastos Cartão',
@@ -521,288 +570,321 @@ export default function Dashboard({ data }: DashboardProps) {
         </div>
       </div>
 
-      {mesesComparaveis.length > 0 && (
-        <div className="dashboard-compare-panel">
-          <div className="dashboard-compare-header">
-            <div>
-              <h3>Comparar meses</h3>
-              <p>Use o menu suspenso para escolher quantos meses quiser analisar.</p>
-            </div>
-            <div className="compare-actions" ref={dropdownRef}>
+      <div className="dashboard-pages-nav">
+        {paginasDashboard.map(page => (
+          <button
+            key={page.id}
+            className={paginaAtual === page.id ? 'active' : ''}
+            onClick={() => setPaginaAtual(page.id)}
+            type="button"
+          >
+            {page.label}
+          </button>
+        ))}
+      </div>
+      {paginaAtivaInfo && (
+        <p className="dashboard-pages-hint">{paginaAtivaInfo.descricao}</p>
+      )}
+
+      {paginaAtual === 'resumo' && (
+        <>
+          {mesesComparaveis.length > 0 && (
+            <div className="dashboard-compare-panel">
+              <div className="dashboard-compare-header">
+                <div>
+                  <h3>Comparar meses</h3>
+                  <p>Use o menu suspenso para escolher quantos meses quiser analisar.</p>
+                </div>
+                <div className="compare-actions" ref={dropdownRef}>
+                  {mesesComparacao.length > 0 && (
+                    <button className="dashboard-clear-button" onClick={limparComparacao}>
+                      Limpar seleção
+                    </button>
+                  )}
+                  <button
+                    className="compare-dropdown__trigger"
+                    onClick={() => setDropdownAberto(prev => !prev)}
+                    type="button"
+                  >
+                    Selecionar meses
+                    <span>{mesesComparacao.length} selecionado(s)</span>
+                  </button>
+                  {dropdownAberto && (
+                    <div className="compare-dropdown">
+                      <div className="compare-dropdown__options">
+                        {mesesComparaveis.map(mes => (
+                          <label key={mes} className="compare-option">
+                            <input
+                              type="checkbox"
+                              checked={mesesComparacao.includes(mes)}
+                              onChange={() => handleToggleComparacao(mes)}
+                            />
+                            {formatMes(mes)}
+                          </label>
+                        ))}
+                      </div>
+                      <div className="compare-dropdown__footer">
+                        <button type="button" onClick={limparComparacao}>
+                          Limpar tudo
+                        </button>
+                        <button type="button" onClick={() => setDropdownAberto(false)}>
+                          Concluir
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {mesesComparacao.length > 0 && (
-                <button className="dashboard-clear-button" onClick={limparComparacao}>
-                  Limpar seleção
-                </button>
-              )}
-              <button
-                className="compare-dropdown__trigger"
-                onClick={() => setDropdownAberto(prev => !prev)}
-                type="button"
-              >
-                Selecionar meses
-                <span>{mesesComparacao.length} selecionado(s)</span>
-              </button>
-              {dropdownAberto && (
-                <div className="compare-dropdown">
-                  <div className="compare-dropdown__options">
-                    {mesesComparaveis.map(mes => (
-                      <label key={mes} className="compare-option">
-                        <input
-                          type="checkbox"
-                          checked={mesesComparacao.includes(mes)}
-                          onChange={() => handleToggleComparacao(mes)}
-                        />
-                        {formatMes(mes)}
-                      </label>
-                    ))}
-                  </div>
-                  <div className="compare-dropdown__footer">
-                    <button type="button" onClick={limparComparacao}>
-                      Limpar tudo
+                <div className="compare-selected">
+                  {mesesComparacao.map(mes => (
+                    <button
+                      type="button"
+                      key={mes}
+                      className="compare-chip selected removable"
+                      onClick={() => handleToggleComparacao(mes)}
+                      title="Remover mês da comparação"
+                    >
+                      {formatMes(mes)} <span>×</span>
                     </button>
-                    <button type="button" onClick={() => setDropdownAberto(false)}>
-                      Concluir
-                    </button>
-                  </div>
+                  ))}
                 </div>
               )}
-            </div>
-          </div>
 
-          {mesesComparacao.length > 0 && (
-            <div className="compare-selected">
-              {mesesComparacao.map(mes => (
-                <button
-                  type="button"
-                  key={mes}
-                  className="compare-chip selected removable"
-                  onClick={() => handleToggleComparacao(mes)}
-                  title="Remover mês da comparação"
-                >
-                  {formatMes(mes)} <span>×</span>
-                </button>
-              ))}
+              <p className="compare-hint">
+                {mesesComparacao.length === 0 &&
+                  'Selecione dois ou mais meses para habilitar a comparação.'}
+                {mesesComparacao.length === 1 &&
+                  'Escolha mais um mês para comparar os indicadores.'}
+                {mesesComparacao.length > 1 &&
+                  `Comparando ${mesesComparacao.length} meses. Clique em um chip para removê-lo.`}
+              </p>
             </div>
           )}
 
-          <p className="compare-hint">
-            {mesesComparacao.length === 0 &&
-              'Selecione dois ou mais meses para habilitar a comparação.'}
-            {mesesComparacao.length === 1 &&
-              'Escolha mais um mês para comparar os indicadores.'}
-            {mesesComparacao.length > 1 &&
-              `Comparando ${mesesComparacao.length} meses. Clique em um chip para removê-lo.`}
-          </p>
-        </div>
-      )}
-
-      <div className="cards-grid">
-        <div className="stat-card receitas">
-          <div className="stat-icon">💰</div>
-          <div className="stat-content">
-            <h3>Receitas</h3>
-            <p className="stat-value">{formatCurrency(saldoAtual.receitas)}</p>
-            <p className="stat-label">Este mês</p>
-          </div>
-        </div>
-
-        <div className="stat-card gastos-cartao">
-          <div className="stat-icon">💳</div>
-          <div className="stat-content">
-            <h3>Gastos Cartão</h3>
-            <p className="stat-value">{formatCurrency(saldoAtual.gastosCartao)}</p>
-            <p className="stat-label">Este mês</p>
-          </div>
-        </div>
-
-        <div className="stat-card gastos-debito">
-          <div className="stat-icon">💸</div>
-          <div className="stat-content">
-            <h3>Gastos Débito</h3>
-            <p className="stat-value">{formatCurrency(saldoAtual.gastosDebito)}</p>
-            <p className="stat-label">Este mês</p>
-          </div>
-        </div>
-
-        <div className={`stat-card saldo ${saldoAtual.saldo >= 0 ? 'positivo' : 'negativo'}`}>
-          <div className="stat-icon">{saldoAtual.saldo >= 0 ? '✅' : '⚠️'}</div>
-          <div className="stat-content">
-            <h3>Saldo do Mês</h3>
-            <p className="stat-value">{formatCurrency(saldoAtual.saldo)}</p>
-            <p className="stat-label">Este mês</p>
-          </div>
-        </div>
-      </div>
-
-      {podeComparar && (
-        <div className="comparison-panel">
-          <div className="comparison-panel__header">
-            <div>
-              <h3>Resumo dos meses selecionados</h3>
-              <p>Compare receitas, gastos e saldo para tomar decisões rápidas.</p>
+          <div className="cards-grid">
+            <div className="stat-card receitas">
+              <div className="stat-icon">💰</div>
+              <div className="stat-content">
+                <h3>Receitas</h3>
+                <p className="stat-value">{formatCurrency(saldoAtual.receitas)}</p>
+                <p className="stat-label">Este mês</p>
+              </div>
             </div>
-            <button className="dashboard-clear-button outline" onClick={limparComparacao}>
-              Reiniciar comparação
-            </button>
+
+            <div className="stat-card gastos-cartao">
+              <div className="stat-icon">💳</div>
+              <div className="stat-content">
+                <h3>Gastos Cartão</h3>
+                <p className="stat-value">{formatCurrency(saldoAtual.gastosCartao)}</p>
+                <p className="stat-label">Este mês</p>
+              </div>
+            </div>
+
+            <div className="stat-card gastos-debito">
+              <div className="stat-icon">💸</div>
+              <div className="stat-content">
+                <h3>Gastos Débito</h3>
+                <p className="stat-value">{formatCurrency(saldoAtual.gastosDebito)}</p>
+                <p className="stat-label">Este mês</p>
+              </div>
+            </div>
+
+            <div className={`stat-card saldo ${saldoAtual.saldo >= 0 ? 'positivo' : 'negativo'}`}>
+              <div className="stat-icon">{saldoAtual.saldo >= 0 ? '✅' : '⚠️'}</div>
+              <div className="stat-content">
+                <h3>Saldo do Mês</h3>
+                <p className="stat-value">{formatCurrency(saldoAtual.saldo)}</p>
+                <p className="stat-label">Este mês</p>
+              </div>
+            </div>
           </div>
-          <div className="comparison-table-wrapper">
-            <table className="comparison-table">
-              <thead>
-                <tr>
-                  <th>Mês</th>
-                  <th className="align-right">Receitas</th>
-                  <th className="align-right">Cartão</th>
-                  <th className="align-right">Débito</th>
-                  <th className="align-right">Saldo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparacaoData.map(item => {
-                  const isMelhor =
-                    item.saldo === maiorSaldoComparado &&
-                    maiorSaldoComparado !== menorSaldoComparado;
-                  const isPior =
-                    item.saldo === menorSaldoComparado &&
-                    maiorSaldoComparado !== menorSaldoComparado;
-                  return (
-                    <tr
-                      key={item.mes}
-                      className={`${item.saldo >= 0 ? 'positivo' : 'negativo'} ${
-                        isMelhor ? 'comparison-best' : isPior ? 'comparison-worst' : ''
-                      }`}
-                    >
-                      <td>{item.mesLabel}</td>
-                      <td className="align-right">{formatCurrency(item.receitas)}</td>
-                      <td className="align-right">{formatCurrency(item.gastosCartao)}</td>
-                      <td className="align-right">{formatCurrency(item.gastosDebito)}</td>
-                      <td className="align-right">{formatCurrency(item.saldo)}</td>
+
+          {podeComparar && (
+            <div className="comparison-panel">
+              <div className="comparison-panel__header">
+                <div>
+                  <h3>Resumo dos meses selecionados</h3>
+                  <p>Compare receitas, gastos e saldo para tomar decisões rápidas.</p>
+                </div>
+                <button className="dashboard-clear-button outline" onClick={limparComparacao}>
+                  Reiniciar comparação
+                </button>
+              </div>
+              <div className="comparison-table-wrapper">
+                <table className="comparison-table">
+                  <thead>
+                    <tr>
+                      <th>Mês</th>
+                      <th className="align-right">Receitas</th>
+                      <th className="align-right">Cartão</th>
+                      <th className="align-right">Débito</th>
+                      <th className="align-right">Saldo</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  </thead>
+                  <tbody>
+                    {comparacaoData.map(item => {
+                      const isMelhor =
+                        item.saldo === maiorSaldoComparado &&
+                        maiorSaldoComparado !== menorSaldoComparado;
+                      const isPior =
+                        item.saldo === menorSaldoComparado &&
+                        maiorSaldoComparado !== menorSaldoComparado;
+                      return (
+                        <tr
+                          key={item.mes}
+                          className={`${item.saldo >= 0 ? 'positivo' : 'negativo'} ${
+                            isMelhor ? 'comparison-best' : isPior ? 'comparison-worst' : ''
+                          }`}
+                        >
+                          <td>{item.mesLabel}</td>
+                          <td className="align-right">{formatCurrency(item.receitas)}</td>
+                          <td className="align-right">{formatCurrency(item.gastosCartao)}</td>
+                          <td className="align-right">{formatCurrency(item.gastosDebito)}</td>
+                          <td className="align-right">{formatCurrency(item.saldo)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
-      <div className="projecao-section">
-        <h3>📈 Projeção dos Próximos 6 Meses</h3>
-        <div className="projecao-resumo">
-          <div className="projecao-item">
-            <span>Total de Receitas:</span>
-            <strong>{formatCurrency(totalReceitas)}</strong>
-          </div>
-          <div className="projecao-item">
-            <span>Total de Gastos (Cartão):</span>
-            <strong>{formatCurrency(totalGastosCartao)}</strong>
-          </div>
-          <div className="projecao-item">
-            <span>Total de Gastos (Débito):</span>
-            <strong>{formatCurrency(totalGastosDebito)}</strong>
-          </div>
-          <div className={`projecao-item ${saldoFinal >= 0 ? 'positivo' : 'negativo'}`}>
-            <span>Saldo Final Acumulado:</span>
-            <strong>{formatCurrency(saldoFinal)}</strong>
-          </div>
-        </div>
-      </div>
+      {paginaAtual === 'projecoes' && (
+        <>
+          {chartTabs.length > 0 && graficoAtivo && (
+            <div className="charts-module">
+              <div className="chart-tabs">
+                {chartTabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    className={`chart-tab-button ${abaGraficos === tab.id ? 'active' : ''}`}
+                    onClick={() => setAbaGraficos(tab.id)}
+                    type="button"
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="chart-tab-content">
+                <div className="chart-card">
+                  <h3>{graficoAtivo.heading}</h3>
+                  {graficoAtivo.content}
+                </div>
+              </div>
+            </div>
+          )}
 
-      <div className="analise-pagamento-section">
-        <h3>💳 Análise de Pagamento de Fatura</h3>
-        <div className="analise-pagamento-content">
-          <div className="analise-card">
-            <div className="analise-icon">{mesAtualAnalise.podePagar ? '✅' : '⚠️'}</div>
-            <div className="analise-info">
-              <h4>Mês Atual ({formatMes(mesAtual)})</h4>
-              <p className="analise-valor">
-                Fatura: <strong>{formatCurrency(mesAtualAnalise.faturaTotal)}</strong>
-              </p>
-              <p className="analise-valor">
-                Saldo Disponível: <strong className={mesAtualAnalise.podePagar ? 'positivo' : 'negativo'}>
-                  {formatCurrency(mesAtualAnalise.saldoDisponivel)}
-                </strong>
-              </p>
-              <p className="analise-status">
-                {mesAtualAnalise.podePagar 
-                  ? '✅ Você pode pagar a fatura este mês!'
-                  : `⚠️ Você precisará de ${mesAtualAnalise.mesesRestantes} mês(es) para pagar a fatura completa.`
-                }
-              </p>
-              <p className="analise-detalhe">
-                A fatura representa {mesAtualAnalise.percentualCobertura.toFixed(1)}% das suas receitas.
-              </p>
+          <div className="projecao-section">
+            <h3>📈 Projeção dos Próximos 6 Meses</h3>
+            <div className="projecao-resumo">
+              <div className="projecao-item">
+                <span>Total de Receitas:</span>
+                <strong>{formatCurrency(totalReceitas)}</strong>
+              </div>
+              <div className="projecao-item">
+                <span>Total de Gastos (Cartão):</span>
+                <strong>{formatCurrency(totalGastosCartao)}</strong>
+              </div>
+              <div className="projecao-item">
+                <span>Total de Gastos (Débito):</span>
+                <strong>{formatCurrency(totalGastosDebito)}</strong>
+              </div>
+              <div className={`projecao-item ${saldoFinal >= 0 ? 'positivo' : 'negativo'}`}>
+                <span>Saldo Final Acumulado:</span>
+                <strong>{formatCurrency(saldoFinal)}</strong>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
-      {chartTabs.length > 0 && graficoAtivo && (
-        <div className="charts-module">
-          <div className="chart-tabs">
-            {chartTabs.map(tab => (
-              <button
-                key={tab.id}
-                className={`chart-tab-button ${abaGraficos === tab.id ? 'active' : ''}`}
-                onClick={() => setAbaGraficos(tab.id)}
-                type="button"
-              >
-                {tab.label}
-              </button>
+      {paginaAtual === 'insights' && (
+        <>
+          <div className="analise-pagamento-section">
+            <h3>💳 Análise de Pagamento de Fatura</h3>
+            <div className="analise-pagamento-content">
+              <div className="analise-card">
+                <div className="analise-icon">{mesAtualAnalise.podePagar ? '✅' : '⚠️'}</div>
+                <div className="analise-info">
+                  <h4>Mês Atual ({formatMes(mesAtual)})</h4>
+                  <p className="analise-valor">
+                    Fatura: <strong>{formatCurrency(mesAtualAnalise.faturaTotal)}</strong>
+                  </p>
+                  <p className="analise-valor">
+                    Saldo Disponível:{' '}
+                    <strong className={mesAtualAnalise.podePagar ? 'positivo' : 'negativo'}>
+                      {formatCurrency(mesAtualAnalise.saldoDisponivel)}
+                    </strong>
+                  </p>
+                  <p className="analise-status">
+                    {mesAtualAnalise.podePagar
+                      ? '✅ Você pode pagar a fatura este mês!'
+                      : `⚠️ Você precisará de ${mesAtualAnalise.mesesRestantes} mês(es) para pagar a fatura completa.`}
+                  </p>
+                  <p className="analise-detalhe">
+                    A fatura representa {mesAtualAnalise.percentualCobertura.toFixed(1)}% das suas receitas.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="meta-section">
+            <h3>🎯 Análise e Recomendações</h3>
+            {saldoFinal > 0 ? (
+              <div className="meta-positiva">
+                <p>
+                  🎉 Excelente! Com base na sua projeção, você pode economizar{' '}
+                  <strong>{formatCurrency(saldoFinal)}</strong> nos próximos {mesesExibidos.length} meses.
+                </p>
+                <p>
+                  Isso representa uma média de{' '}
+                  <strong>{formatCurrency(saldoFinal / mesesExibidos.length)}</strong> por mês.
+                </p>
+                {mesAtualAnalise.podePagar && (
+                  <p>✅ Você está em condições de pagar todas as suas faturas do cartão no mês atual.</p>
+                )}
+              </div>
+            ) : (
+              <div className="meta-negativa">
+                <p>
+                  ⚠️ Atenção! Sua projeção indica um saldo negativo de{' '}
+                  <strong>{formatCurrency(Math.abs(saldoFinal))}</strong> nos próximos {mesesExibidos.length} meses.
+                </p>
+                {mesesCriticos.length > 0 && (
+                  <p>
+                    📍 Você terá saldo negativo em {mesesCriticos.length} mês(es):{' '}
+                    {mesesCriticos.map(m => formatMes(m.mes)).join(', ')}.
+                  </p>
+                )}
+                <p>💡 Recomendações:</p>
+                <ul>
+                  <li>Revise seus gastos e identifique onde pode economizar</li>
+                  <li>Considere aumentar suas receitas</li>
+                  <li>Priorize o pagamento das faturas dos meses críticos</li>
+                  {!mesAtualAnalise.podePagar && (
+                    <li>Você precisará de aproximadamente {mesAtualAnalise.mesesRestantes} mês(es) para pagar a fatura atual</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className="insights-panel">
+            {insightsFinanceiros.map(insight => (
+              <div className="insight-card" key={insight.titulo}>
+                <h4>{insight.titulo}</h4>
+                <p>{insight.descricao}</p>
+              </div>
             ))}
           </div>
-          <div className="chart-tab-content">
-            <div className="chart-card">
-              <h3>{graficoAtivo.heading}</h3>
-              {graficoAtivo.content}
-            </div>
-          </div>
-        </div>
+        </>
       )}
-
-      <div className="meta-section">
-        <h3>🎯 Análise e Recomendações</h3>
-        {saldoFinal > 0 ? (
-          <div className="meta-positiva">
-            <p>
-              🎉 Excelente! Com base na sua projeção, você pode economizar{' '}
-              <strong>{formatCurrency(saldoFinal)}</strong> nos próximos {mesesExibidos.length} meses.
-            </p>
-            <p>
-              Isso representa uma média de{' '}
-              <strong>{formatCurrency(saldoFinal / mesesExibidos.length)}</strong> por mês.
-            </p>
-            {mesAtualAnalise.podePagar && (
-              <p>
-                ✅ Você está em condições de pagar todas as suas faturas do cartão no mês atual.
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="meta-negativa">
-            <p>
-              ⚠️ Atenção! Sua projeção indica um saldo negativo de{' '}
-              <strong>{formatCurrency(Math.abs(saldoFinal))}</strong> nos próximos {mesesExibidos.length} meses.
-            </p>
-            {mesesCriticos.length > 0 && (
-              <p>
-                📍 Você terá saldo negativo em {mesesCriticos.length} mês(es):{' '}
-                {mesesCriticos.map(m => formatMes(m.mes)).join(', ')}.
-              </p>
-            )}
-            <p>
-              💡 Recomendações:
-            </p>
-            <ul>
-              <li>Revise seus gastos e identifique onde pode economizar</li>
-              <li>Considere aumentar suas receitas</li>
-              <li>Priorize o pagamento das faturas dos meses críticos</li>
-              {!mesAtualAnalise.podePagar && (
-                <li>Você precisará de aproximadamente {mesAtualAnalise.mesesRestantes} mês(es) para pagar a fatura atual</li>
-              )}
-            </ul>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

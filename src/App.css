@@ -97,6 +97,13 @@
   flex-wrap: wrap;
 }
 
+.sheet-toolbar.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
 .sheet-breadcrumb {
   font-size: 0.85rem;
   letter-spacing: 0.02em;
@@ -170,7 +177,7 @@
 
 .sheet-content {
   padding: 32px;
-  overflow-y: visible;
+  overflow: visible;
   background: #fefefe;
 }
 

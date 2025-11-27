@@ -209,7 +209,7 @@ function App() {
       </nav>
 
       <section className="sheet-main">
-        <div className="sheet-toolbar">
+        <div className="sheet-toolbar sticky">
           <div>
             <span className="sheet-breadcrumb">Finanças &gt; {tabLabels[activeTab]}</span>
             <h2>{tabLabels[activeTab]}</h2>
