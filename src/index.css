@@ -8,16 +8,16 @@ body {
   font-family: 'Inter', 'Roboto', 'Segoe UI', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #e8eaed;
+  background: #f5f7fb;
   min-height: 100vh;
-  padding: 20px;
+  padding: 0;
   color: #1a1a1a;
 }
 
 #root {
-  max-width: 1500px;
-  margin: 0 auto;
   width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 /* iPhone XR e dispositivos móveis */

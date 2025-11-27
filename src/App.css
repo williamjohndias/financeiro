@@ -1,12 +1,12 @@
 .sheet-shell {
   background: #ffffff;
-  border-radius: 18px;
-  border: 1px solid #e0e4ea;
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 40px);
+  min-height: 100vh;
 }
 
 .sheet-topbar {
@@ -183,16 +183,14 @@
 }
 
 .sheet-content--full {
-  height: calc(100vh - 220px);
-  overflow: hidden;
+  flex: 1;
+  min-height: calc(100vh - 220px);
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 .sheet-content--full > * {
   flex: 1;
-  min-height: 0;
 }
 
 .sheet-content--scroll {
@@ -301,6 +299,7 @@
   flex-direction: column;
   gap: 12px;
   overflow: auto;
+  max-height: 260px;
 }
 
 .resumo-list li {
