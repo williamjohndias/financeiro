@@ -1,0 +1,33 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', 'Roboto', 'Segoe UI', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #e8eaed;
+  min-height: 100vh;
+  padding: 20px;
+  color: #1a1a1a;
+}
+
+#root {
+  max-width: 1500px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* iPhone XR e dispositivos móveis */
+@media (max-width: 428px) {
+  body {
+    padding: 0;
+  }
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
