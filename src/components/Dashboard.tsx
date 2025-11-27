@@ -37,6 +37,7 @@ interface DashboardProps {
 type StatusCartaoFiltro = 'todos' | 'pagos' | 'abertos';
 type GraficoTab = 'comparativo' | 'distribuicao' | 'capacidade' | 'tendencia' | 'saldo' | 'parcelas';
 type DashboardPage = 'resumo' | 'projecoes' | 'insights';
+type ResumoView = 'principal' | 'comparar' | 'tabela';
 
 export default function Dashboard({ data }: DashboardProps) {
   const [mesFiltro, setMesFiltro] = useState<string>('');
@@ -51,6 +52,7 @@ export default function Dashboard({ data }: DashboardProps) {
   const [dropdownAberto, setDropdownAberto] = useState(false);
   const [abaGraficos, setAbaGraficos] = useState<GraficoTab>('comparativo');
   const [paginaAtual, setPaginaAtual] = useState<DashboardPage>('resumo');
+  const [resumoView, setResumoView] = useState<ResumoView>('principal');
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -215,11 +217,15 @@ export default function Dashboard({ data }: DashboardProps) {
     })
     .filter(item => item.Pagas > 0 || item.Abertas > 0);
 
-  const paginasDashboard: Array<{ id: DashboardPage; label: string; descricao: string }> = [
+  const paginasDashboard: Array<{
+    id: DashboardPage;
+    label: string;
+    descricao: string;
+  }> = [
     {
       id: 'resumo',
       label: 'Resumo',
-      descricao: 'Visão geral dos cartões, receitas e comparações entre meses.',
+      descricao: 'Escolha visualizar o painel principal, o comparador ou a tabela resumida.',
     },
     {
       id: 'projecoes',
@@ -234,6 +240,11 @@ export default function Dashboard({ data }: DashboardProps) {
   ];
 
   const paginaAtivaInfo = paginasDashboard.find(page => page.id === paginaAtual);
+  const resumoViews: Array<{ id: ResumoView; label: string }> = [
+    { id: 'principal', label: 'Painel Principal' },
+    { id: 'comparar', label: 'Comparar Meses' },
+    { id: 'tabela', label: 'Tabela Comparativa' },
+  ];
 
   const chartTabs = useMemo(() => {
     const tabs: Array<{

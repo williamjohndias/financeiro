@@ -257,7 +257,7 @@ function App() {
           </div>
         </div>
 
-        <div className={`sheet-content ${activeTab === 'dashboard' ? 'sheet-content--full' : ''}`}>
+        <div className={`sheet-content sheet-content--full`}>
           {loading ? (
             <div className="sheet-loading">
               <div className="sheet-loading__spinner" />
@@ -265,7 +265,7 @@ function App() {
             </div>
           ) : (
             <>
-              {activeTab === 'dashboard' && <Dashboard data={data} />}
+                {activeTab === 'dashboard' && <Dashboard data={data} />}
 
               {activeTab === 'receitas' && (
                 <div className="sheet-grid">
