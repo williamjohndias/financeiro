@@ -10,7 +10,7 @@ import ListaReceitas from './components/ListaReceitas';
 import ListaGastos from './components/ListaGastos';
 import './App.css';
 
-type TabKey = 'dashboard' | 'receitas' | 'gastos';
+type TabKey = 'resumo' | 'dashboards' | 'receitas' | 'gastos';
 
 function App() {
   const [data, setData] = useState<FinancasData>({
@@ -18,7 +18,7 @@ function App() {
     gastosCartao: [],
     gastosDebito: [],
   });
-  const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabKey>('resumo');
   const [loading, setLoading] = useState(true);
 
   // Carregar dados do Supabase quando o componente montar
@@ -178,8 +178,41 @@ function App() {
 
   const saldoGeral = totalReceitas - totalCartao - totalDebito;
 
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+
+  const mesAtualDate = new Date();
+  const mesAtualKey = `${mesAtualDate.getFullYear()}-${String(mesAtualDate.getMonth() + 1).padStart(2, '0')}`;
+
+  const receitasMesAtual = data.receitas.filter(r => r.mes === mesAtualKey);
+  const totalReceitasMesAtual = receitasMesAtual.reduce((sum, r) => sum + r.valor, 0);
+  const gastosCartaoMesAtual = data.gastosCartao
+    .filter(g => g.mes === mesAtualKey)
+    .reduce((sum, g) => sum + g.valorParcela, 0);
+  const gastosDebitoMesAtual = data.gastosDebito
+    .filter(g => g.mes === mesAtualKey)
+    .reduce((sum, g) => sum + g.valor, 0);
+  const saldoMesAtual = totalReceitasMesAtual - gastosCartaoMesAtual - gastosDebitoMesAtual;
+
+  const receitasRecentes = [...data.receitas]
+    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+    .slice(0, 5);
+  const gastosRecentes = [...data.gastosDebito, ...data.gastosCartao.map(g => ({
+    id: g.id,
+    descricao: g.descricao,
+    valor: g.valorParcela,
+    data: g.dataInicio,
+    mes: g.mes,
+  }))]
+    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+    .slice(0, 5);
+
   const tabLabels: Record<TabKey, string> = {
-    dashboard: 'Dashboard',
+    resumo: 'Resumo do mês',
+    dashboards: 'Dashboards',
     receitas: 'Receitas',
     gastos: 'Gastos',
   };
@@ -197,7 +230,7 @@ function App() {
       </header>
 
       <nav className="sheet-tabbar">
-        {(['dashboard', 'receitas', 'gastos'] as TabKey[]).map(tab => (
+        {(['resumo', 'dashboards', 'receitas', 'gastos'] as TabKey[]).map(tab => (
           <button
             key={tab}
             className={`sheet-tab ${activeTab === tab ? 'active' : ''}`}
@@ -257,7 +290,11 @@ function App() {
           </div>
         </div>
 
-        <div className={`sheet-content sheet-content--full`}>
+        <div
+          className={`sheet-content sheet-content--full ${
+            activeTab !== 'resumo' ? 'sheet-content--scroll' : ''
+          }`}
+        >
           {loading ? (
             <div className="sheet-loading">
               <div className="sheet-loading__spinner" />
@@ -265,7 +302,68 @@ function App() {
             </div>
           ) : (
             <>
-                {activeTab === 'dashboard' && <Dashboard data={data} />}
+              {activeTab === 'resumo' && (
+                <div className="resumo-page">
+                  <section className="resumo-cards-grid">
+                    <div className="resumo-card receitas">
+                      <span>Receitas do mês</span>
+                      <strong>{formatCurrency(totalReceitasMesAtual)}</strong>
+                    </div>
+                    <div className="resumo-card cartao">
+                      <span>Gastos no cartão</span>
+                      <strong>{formatCurrency(gastosCartaoMesAtual)}</strong>
+                    </div>
+                    <div className="resumo-card debito">
+                      <span>Gastos no débito</span>
+                      <strong>{formatCurrency(gastosDebitoMesAtual)}</strong>
+                    </div>
+                    <div className={`resumo-card saldo ${saldoMesAtual >= 0 ? 'positivo' : 'negativo'}`}>
+                      <span>Saldo do mês</span>
+                      <strong>{formatCurrency(saldoMesAtual)}</strong>
+                    </div>
+                  </section>
+
+                  <section className="resumo-panels">
+                    <div className="resumo-list">
+                      <header>
+                        <h3>Últimas receitas</h3>
+                        <p>{receitasRecentes.length} registros recentes</p>
+                      </header>
+                      <ul>
+                        {receitasRecentes.map(item => (
+                          <li key={item.id}>
+                            <div>
+                              <strong>{item.descricao}</strong>
+                              <span>{new Date(item.data).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                            <span>{formatCurrency(item.valor)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="resumo-list">
+                      <header>
+                        <h3>Últimos gastos</h3>
+                        <p>{gastosRecentes.length} registros recentes</p>
+                      </header>
+                      <ul>
+                        {gastosRecentes.map(item => (
+                          <li key={item.id}>
+                            <div>
+                              <strong>{item.descricao}</strong>
+                              <span>{new Date(item.data).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                            <span className="negativo">{formatCurrency(item.valor)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </section>
+                </div>
+              )}
+
+              {activeTab === 'dashboards' && <Dashboard data={data} />}
 
               {activeTab === 'receitas' && (
                 <div className="sheet-grid">
