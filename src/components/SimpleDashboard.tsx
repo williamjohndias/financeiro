@@ -20,9 +20,10 @@ import {
 interface SimpleDashboardProps {
   data: FinancasData;
   page: 'resumo' | 'projecoes' | 'insights';
+  mesesFiltrados?: string[];
 }
 
-export default function SimpleDashboard({ data, page }: SimpleDashboardProps) {
+export default function SimpleDashboard({ data, page, mesesFiltrados }: SimpleDashboardProps) {
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -43,27 +44,37 @@ export default function SimpleDashboard({ data, page }: SimpleDashboardProps) {
     };
   }, [data, mesAtual]);
 
-  // Dados dos últimos 6 meses
+  // Dados dos meses (filtrados ou últimos 6 meses)
   const dadosUltimosMeses = useMemo(() => {
-    const meses: string[] = [];
-    const hoje = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-      const mes = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
-      meses.push(mes);
+    let mesesParaUsar: string[];
+    
+    if (mesesFiltrados && mesesFiltrados.length > 0) {
+      // Usar meses selecionados pelo filtro
+      mesesParaUsar = [...mesesFiltrados].sort();
+    } else {
+      // Usar últimos 6 meses por padrão
+      const meses: string[] = [];
+      const hoje = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+        const mes = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
+        meses.push(mes);
+      }
+      mesesParaUsar = meses;
     }
 
-    return meses.map(mes => {
+    return mesesParaUsar.map(mes => {
       const saldo = calcularSaldoMensal(mes, data.receitas, data.gastosCartao, data.gastosDebito);
       return {
         mes: formatMes(mes).split(' ')[0].substring(0, 3),
-        Receitas: saldo.receitas,
-        'Gastos Cartão': saldo.gastosCartao,
-        'Gastos Débito': saldo.gastosDebito,
-        Saldo: saldo.saldo,
+        mesCompleto: formatMes(mes),
+        Receitas: Math.round(saldo.receitas * 100) / 100,
+        'Gastos Cartão': Math.round(saldo.gastosCartao * 100) / 100,
+        'Gastos Débito': Math.round(saldo.gastosDebito * 100) / 100,
+        Saldo: Math.round(saldo.saldo * 100) / 100,
       };
     }).filter(item => item.Receitas > 0 || item['Gastos Cartão'] > 0 || item['Gastos Débito'] > 0);
-  }, [data]);
+  }, [data, mesesFiltrados]);
 
   // Dados para gráfico de pizza
   const dadosPizza = useMemo(() => {

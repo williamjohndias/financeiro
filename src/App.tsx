@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { FinancasData } from './types';
 import { loadData, addReceita, addGastoCartao, addGastoDebito, deleteReceita as deleteReceitaDB, deleteGastoCartao as deleteGastoCartaoDB, deleteGastoDebito as deleteGastoDebitoDB, updateGastoCartaoPago } from './utils/storage';
 import { GastoCartao } from './types';
+import { getTodosMesesComDados, formatMes } from './utils/calculations';
 import ReceitasForm from './components/ReceitasForm';
 import GastosCartaoForm from './components/GastosCartaoForm';
 import GastosDebitoForm from './components/GastosDebitoForm';
@@ -22,6 +23,9 @@ function App() {
   });
   const [activeTab, setActiveTab] = useState<TabKey>('resumo');
   const [dashboardTab, setDashboardTab] = useState<DashboardTab>('resumo');
+  const [mesesSelecionados, setMesesSelecionados] = useState<string[]>([]);
+  const [dropdownMesesAberto, setDropdownMesesAberto] = useState(false);
+  const dropdownMesesRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,6 +49,33 @@ function App() {
 
     fetchData();
   }, []);
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownMesesRef.current && !dropdownMesesRef.current.contains(event.target as Node)) {
+        setDropdownMesesAberto(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Obter todos os meses com dados
+  const todosMesesComDados = useMemo(() => {
+    return getTodosMesesComDados(data.receitas, data.gastosCartao, data.gastosDebito);
+  }, [data]);
+
+  const handleToggleMes = (mes: string) => {
+    setMesesSelecionados(prev =>
+      prev.includes(mes) ? prev.filter(m => m !== mes) : [...prev, mes]
+    );
+  };
+
+  const limparMesesSelecionados = () => {
+    setMesesSelecionados([]);
+  };
 
   const handleAddReceita = async (receita: any) => {
     const novaReceita = { ...receita, id: Date.now().toString() };
@@ -296,7 +327,64 @@ function App() {
                   
                   <div className="dashboard-section">
                     <div className="dashboard-tabs-header">
-                      <h3>📊 Dashboards e Análises</h3>
+                      <div>
+                        <h3>📊 Dashboards e Análises</h3>
+                        <div className="meses-filter" ref={dropdownMesesRef}>
+                          <button
+                            className="meses-filter-button"
+                            onClick={() => setDropdownMesesAberto(!dropdownMesesAberto)}
+                            type="button"
+                          >
+                            <span>📅 Filtrar Meses</span>
+                            {mesesSelecionados.length > 0 && (
+                              <span className="meses-count">{mesesSelecionados.length} selecionado(s)</span>
+                            )}
+                          </button>
+                          {dropdownMesesAberto && (
+                            <div className="meses-dropdown">
+                              <div className="meses-dropdown-header">
+                                <span>Selecione os meses para comparar</span>
+                                {mesesSelecionados.length > 0 && (
+                                  <button
+                                    className="limpar-meses-btn"
+                                    onClick={limparMesesSelecionados}
+                                    type="button"
+                                  >
+                                    Limpar
+                                  </button>
+                                )}
+                              </div>
+                              <div className="meses-dropdown-options">
+                                {todosMesesComDados.map(mes => (
+                                  <label key={mes} className="mes-option">
+                                    <input
+                                      type="checkbox"
+                                      checked={mesesSelecionados.includes(mes)}
+                                      onChange={() => handleToggleMes(mes)}
+                                    />
+                                    <span>{formatMes(mes)}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {mesesSelecionados.length > 0 && (
+                            <div className="meses-selected-chips">
+                              {mesesSelecionados.map(mes => (
+                                <button
+                                  key={mes}
+                                  className="mes-chip"
+                                  onClick={() => handleToggleMes(mes)}
+                                  type="button"
+                                  title="Remover mês"
+                                >
+                                  {formatMes(mes).split(' ')[0]} <span>×</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                       <div className="dashboard-tabs">
                         <button
                           className={`dashboard-tab ${dashboardTab === 'resumo' ? 'active' : ''}`}
@@ -319,7 +407,11 @@ function App() {
                       </div>
                     </div>
                     <div className="dashboard-content-wrapper">
-                      <SimpleDashboard data={data} page={dashboardTab} />
+                      <SimpleDashboard 
+                        data={data} 
+                        page={dashboardTab} 
+                        mesesFiltrados={mesesSelecionados.length > 0 ? mesesSelecionados : undefined}
+                      />
                     </div>
                   </div>
                 </div>
