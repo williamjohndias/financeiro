@@ -446,6 +446,9 @@ export default function Dashboard({ data, initialPage }: DashboardProps) {
 
   const graficoAtivo = chartTabs.find(tab => tab.id === abaGraficos) || chartTabs[0];
 
+  // Calcular estratégia de pagamento - MOVER PARA ANTES DO USO
+  const mesAtualAnalise = analisesPagamento.find(a => a.mes === mesAtual) || analisesPagamento[0] || analisePadrao;
+
   const valorParaQuitarMes = saldoAtual.saldo < 0 ? Math.abs(saldoAtual.saldo) : 0;
   const coberturaCartao = saldoAtual.receitas > 0 ? (saldoAtual.gastosCartao / saldoAtual.receitas) * 100 : 0;
   const valorFaturaFaltante = Math.max(0, mesAtualAnalise.faturaTotal - mesAtualAnalise.saldoDisponivel);
@@ -523,9 +526,6 @@ export default function Dashboard({ data, initialPage }: DashboardProps) {
 
   // Encontrar meses críticos (saldo negativo)
   const mesesCriticos = saldoAcumulado.filter(m => m.saldo < 0);
-  
-  // Calcular estratégia de pagamento
-  const mesAtualAnalise = analisesPagamento.find(a => a.mes === mesAtual) || analisesPagamento[0] || analisePadrao;
 
   return (
     <div className="dashboard">
