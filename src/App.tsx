@@ -5,12 +5,14 @@ import { GastoCartao } from './types';
 import ReceitasForm from './components/ReceitasForm';
 import GastosCartaoForm from './components/GastosCartaoForm';
 import GastosDebitoForm from './components/GastosDebitoForm';
-import Dashboard from './components/Dashboard';
+import SimpleDashboard from './components/SimpleDashboard';
 import ListaReceitas from './components/ListaReceitas';
 import ListaGastos from './components/ListaGastos';
 import './App.css';
 
-type TabKey = 'resumo' | 'dashboards' | 'receitas' | 'gastos';
+type DashboardTab = 'resumo' | 'projecoes' | 'insights';
+
+type TabKey = 'resumo' | 'receitas' | 'gastos';
 
 function App() {
   const [data, setData] = useState<FinancasData>({
@@ -19,9 +21,9 @@ function App() {
     gastosDebito: [],
   });
   const [activeTab, setActiveTab] = useState<TabKey>('resumo');
+  const [dashboardTab, setDashboardTab] = useState<DashboardTab>('resumo');
   const [loading, setLoading] = useState(true);
 
-  // Carregar dados do Supabase quando o componente montar
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -44,17 +46,12 @@ function App() {
     fetchData();
   }, []);
 
-  // Removido: não vamos mais salvar automaticamente toda vez que data mudar
-  // Isso causaria muitos requests desnecessários. Cada operação salva individualmente.
-
   const handleAddReceita = async (receita: any) => {
     const novaReceita = { ...receita, id: Date.now().toString() };
-    // Adicionar no estado local primeiro
     setData(prev => ({
       ...prev,
       receitas: [...prev.receitas, novaReceita],
     }));
-    // Tentar adicionar no Supabase (não bloqueia se falhar)
     await addReceita(novaReceita);
   };
 
@@ -67,7 +64,6 @@ function App() {
       const dataParcela = new Date(dataInicio);
       dataParcela.setMonth(dataParcela.getMonth() + i - 1);
       
-      // Garantir que o mês está correto após adicionar meses
       const ano = dataParcela.getFullYear();
       const mes = dataParcela.getMonth() + 1;
       const mesParcela = `${ano}-${String(mes).padStart(2, '0')}`;
@@ -84,13 +80,11 @@ function App() {
       gastosParcelados.push(gastoParcelado);
     }
     
-    // Adicionar no estado local primeiro
     setData(prev => ({
       ...prev,
       gastosCartao: [...prev.gastosCartao, ...gastosParcelados],
     }));
     
-    // Tentar adicionar cada parcela no Supabase (não bloqueia se falhar)
     for (const gastoParcelado of gastosParcelados) {
       await addGastoCartao(gastoParcelado);
     }
@@ -98,50 +92,41 @@ function App() {
 
   const handleAddGastoDebito = async (gasto: any) => {
     const novoGasto = { ...gasto, id: Date.now().toString() };
-    // Adicionar no estado local primeiro
     setData(prev => ({
       ...prev,
       gastosDebito: [...prev.gastosDebito, novoGasto],
     }));
-    // Tentar adicionar no Supabase (não bloqueia se falhar)
     await addGastoDebito(novoGasto);
   };
 
   const handleDeleteReceita = async (id: string) => {
-    // Remover do estado local primeiro
     setData(prev => ({
       ...prev,
       receitas: prev.receitas.filter(r => r.id !== id),
     }));
-    // Tentar deletar no Supabase (não bloqueia se falhar)
     await deleteReceitaDB(id);
   };
 
   const handleDeleteGastoCartao = async (id: string) => {
     const gasto = data.gastosCartao.find(g => g.id === id);
     if (gasto) {
-      // Remove todas as parcelas do mesmo gasto
       const idBase = id.split('-').slice(0, -1).join('-');
       const parcelasParaDeletar = data.gastosCartao.filter(g => g.id.startsWith(idBase));
       
-      // Remover do estado local primeiro
       setData(prev => ({
         ...prev,
         gastosCartao: prev.gastosCartao.filter(g => !g.id.startsWith(idBase)),
       }));
       
-      // Tentar deletar cada parcela no Supabase (não bloqueia se falhar)
       await Promise.all(parcelasParaDeletar.map(p => deleteGastoCartaoDB(p.id)));
     }
   };
 
   const handleDeleteGastoDebito = async (id: string) => {
-    // Remover do estado local primeiro
     setData(prev => ({
       ...prev,
       gastosDebito: prev.gastosDebito.filter(g => g.id !== id),
     }));
-    // Tentar deletar no Supabase (não bloqueia se falhar)
     await deleteGastoDebitoDB(id);
   };
 
@@ -149,14 +134,12 @@ function App() {
     const gasto = data.gastosCartao.find(g => g.id === id);
     if (gasto) {
       const novoStatus = !gasto.pago;
-      // Atualizar no estado local primeiro
       setData(prev => ({
         ...prev,
         gastosCartao: prev.gastosCartao.map(g => 
           g.id === id ? { ...g, pago: novoStatus } : g
         ),
       }));
-      // Tentar atualizar no Supabase (não bloqueia se falhar)
       await updateGastoCartaoPago(id, novoStatus);
     }
   };
@@ -197,194 +180,180 @@ function App() {
     .reduce((sum, g) => sum + g.valor, 0);
   const saldoMesAtual = totalReceitasMesAtual - gastosCartaoMesAtual - gastosDebitoMesAtual;
 
-  const receitasRecentes = [...data.receitas]
-    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-    .slice(0, 5);
-  const gastosRecentes = [...data.gastosDebito, ...data.gastosCartao.map(g => ({
-    id: g.id,
-    descricao: g.descricao,
-    valor: g.valorParcela,
-    data: g.dataInicio,
-    mes: g.mes,
-  }))]
-    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-    .slice(0, 5);
-
   const tabLabels: Record<TabKey, string> = {
-    resumo: 'Resumo do mês',
-    dashboards: 'Dashboards',
+    resumo: 'Resumo',
     receitas: 'Receitas',
     gastos: 'Gastos',
   };
 
+  const tabIcons: Record<TabKey, string> = {
+    resumo: '📊',
+    receitas: '💰',
+    gastos: '💳',
+  };
+
   return (
-    <div className="sheet-shell">
-      <header className="sheet-topbar">
-        <div className="sheet-topbar__left">
-          <div className="sheet-doc-icon">📊</div>
-          <div>
-            <p className="sheet-doc-label">Visão financeira</p>
-            <h1>Painel de Controle</h1>
+    <div className="app-container">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="logo">
+            <span className="logo-icon">💼</span>
+            <div>
+              <h1>Financeiro</h1>
+              <p>Controle Pessoal</p>
+            </div>
           </div>
         </div>
-      </header>
 
-      <nav className="sheet-tabbar">
-        {(['resumo', 'dashboards', 'receitas', 'gastos'] as TabKey[]).map(tab => (
-          <button
-            key={tab}
-            className={`sheet-tab ${activeTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tabLabels[tab]}
-          </button>
-        ))}
-      </nav>
+        <nav className="sidebar-nav">
+          {(['resumo', 'receitas', 'gastos'] as TabKey[]).map(tab => (
+            <button
+              key={tab}
+              className={`nav-item ${activeTab === tab ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              <span className="nav-icon">{tabIcons[tab]}</span>
+              <span className="nav-label">{tabLabels[tab]}</span>
+            </button>
+          ))}
+        </nav>
 
-      <section className="sheet-main">
-        <div className="sheet-toolbar sticky">
-          <div>
-            <span className="sheet-breadcrumb">Finanças &gt; {tabLabels[activeTab]}</span>
-            <h2>{tabLabels[activeTab]}</h2>
-            <p className="sheet-toolbar__hint">
-              Visual minimalista inspirado em planilhas para facilitar sua leitura.
-            </p>
-          </div>
-          <div className="sheet-toolbar__stats">
-            <div className="sheet-chip receitas">
-              <span>Receitas</span>
-              <strong>
-                {totalReceitas.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
-              </strong>
-            </div>
-            <div className="sheet-chip cartao">
-              <span>Cartão</span>
-              <strong>
-                {totalCartao.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
-              </strong>
-            </div>
-            <div className="sheet-chip debito">
-              <span>Débito</span>
-              <strong>
-                {totalDebito.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
-              </strong>
-            </div>
-            <div className={`sheet-chip saldo ${saldoGeral >= 0 ? 'positivo' : 'negativo'}`}>
+        <div className="sidebar-footer">
+          <div className="summary-card">
+            <div className="summary-item">
               <span>Saldo Geral</span>
-              <strong>
-                {saldoGeral.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
+              <strong className={saldoGeral >= 0 ? 'positive' : 'negative'}>
+                {formatCurrency(saldoGeral)}
               </strong>
             </div>
           </div>
         </div>
+      </aside>
 
-        <div
-          className={`sheet-content sheet-content--full ${
-            activeTab !== 'resumo' ? 'sheet-content--scroll' : ''
-          }`}
-        >
-          {loading ? (
-            <div className="sheet-loading">
-              <div className="sheet-loading__spinner" />
+      <main className="main-content">
+        <header className="main-header">
+          <div>
+            <h2>{tabLabels[activeTab]}</h2>
+            <p className="header-subtitle">Gerencie suas finanças de forma simples e eficiente</p>
+          </div>
+          <div className="header-stats">
+            <div className="stat-badge receitas">
+              <span className="stat-label">Receitas</span>
+              <span className="stat-value">{formatCurrency(totalReceitas)}</span>
+            </div>
+            <div className="stat-badge cartao">
+              <span className="stat-label">Cartão</span>
+              <span className="stat-value">{formatCurrency(totalCartao)}</span>
+            </div>
+            <div className="stat-badge debito">
+              <span className="stat-label">Débito</span>
+              <span className="stat-value">{formatCurrency(totalDebito)}</span>
+            </div>
+          </div>
+        </header>
+
+        <div className="content-area">
+          {loading && (
+            <div className="loading-state">
+              <div className="spinner"></div>
               <p>Carregando dados...</p>
             </div>
-          ) : (
+          )}
+          {!loading && (
             <>
               {activeTab === 'resumo' && (
-                <div className="resumo-page">
-                  <section className="resumo-cards-grid">
-                    <div className="resumo-card receitas">
-                      <span>Receitas do mês</span>
-                      <strong>{formatCurrency(totalReceitasMesAtual)}</strong>
+                <div className="resumo-view">
+                  <div className="cards-row">
+                    <div className="metric-card receitas">
+                      <div className="card-icon">💰</div>
+                      <div className="card-content">
+                        <span className="card-label">Receitas do Mês</span>
+                        <strong className="card-value">{formatCurrency(totalReceitasMesAtual)}</strong>
+                      </div>
                     </div>
-                    <div className="resumo-card cartao">
-                      <span>Gastos no cartão</span>
-                      <strong>{formatCurrency(gastosCartaoMesAtual)}</strong>
+                    <div className="metric-card cartao">
+                      <div className="card-icon">💳</div>
+                      <div className="card-content">
+                        <span className="card-label">Gastos no Cartão</span>
+                        <strong className="card-value">{formatCurrency(gastosCartaoMesAtual)}</strong>
+                      </div>
                     </div>
-                    <div className="resumo-card debito">
-                      <span>Gastos no débito</span>
-                      <strong>{formatCurrency(gastosDebitoMesAtual)}</strong>
+                    <div className="metric-card debito">
+                      <div className="card-icon">💸</div>
+                      <div className="card-content">
+                        <span className="card-label">Gastos no Débito</span>
+                        <strong className="card-value">{formatCurrency(gastosDebitoMesAtual)}</strong>
+                      </div>
                     </div>
-                    <div className={`resumo-card saldo ${saldoMesAtual >= 0 ? 'positivo' : 'negativo'}`}>
-                      <span>Saldo do mês</span>
-                      <strong>{formatCurrency(saldoMesAtual)}</strong>
+                    <div className={`metric-card saldo ${saldoMesAtual >= 0 ? 'positive' : 'negative'}`}>
+                      <div className="card-icon">{saldoMesAtual >= 0 ? '✅' : '⚠️'}</div>
+                      <div className="card-content">
+                        <span className="card-label">Saldo do Mês</span>
+                        <strong className="card-value">{formatCurrency(saldoMesAtual)}</strong>
+                      </div>
                     </div>
-                  </section>
-
-                  <section className="resumo-panels">
-                    <div className="resumo-list">
-                      <header>
-                        <h3>Últimas receitas</h3>
-                        <p>{receitasRecentes.length} registros recentes</p>
-                      </header>
-                      <ul>
-                        {receitasRecentes.map(item => (
-                          <li key={item.id}>
-                            <div>
-                              <strong>{item.descricao}</strong>
-                              <span>{new Date(item.data).toLocaleDateString('pt-BR')}</span>
-                            </div>
-                            <span>{formatCurrency(item.valor)}</span>
-                          </li>
-                        ))}
-                      </ul>
+                  </div>
+                  
+                  <div className="dashboard-section">
+                    <div className="dashboard-tabs-header">
+                      <h3>📊 Dashboards e Análises</h3>
+                      <div className="dashboard-tabs">
+                        <button
+                          className={`dashboard-tab ${dashboardTab === 'resumo' ? 'active' : ''}`}
+                          onClick={() => setDashboardTab('resumo')}
+                        >
+                          Resumo
+                        </button>
+                        <button
+                          className={`dashboard-tab ${dashboardTab === 'projecoes' ? 'active' : ''}`}
+                          onClick={() => setDashboardTab('projecoes')}
+                        >
+                          Projeções
+                        </button>
+                        <button
+                          className={`dashboard-tab ${dashboardTab === 'insights' ? 'active' : ''}`}
+                          onClick={() => setDashboardTab('insights')}
+                        >
+                          Insights
+                        </button>
+                      </div>
                     </div>
-
-                    <div className="resumo-list">
-                      <header>
-                        <h3>Últimos gastos</h3>
-                        <p>{gastosRecentes.length} registros recentes</p>
-                      </header>
-                      <ul>
-                        {gastosRecentes.map(item => (
-                          <li key={item.id}>
-                            <div>
-                              <strong>{item.descricao}</strong>
-                              <span>{new Date(item.data).toLocaleDateString('pt-BR')}</span>
-                            </div>
-                            <span className="negativo">{formatCurrency(item.valor)}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="dashboard-content-wrapper">
+                      <SimpleDashboard data={data} page={dashboardTab} />
                     </div>
-                  </section>
+                  </div>
                 </div>
               )}
 
-              {activeTab === 'dashboards' && <Dashboard data={data} />}
-
               {activeTab === 'receitas' && (
-                <div className="sheet-grid">
-                  <div className="sheet-panel sheet-panel--form">
-                    <ReceitasForm onAdd={handleAddReceita} />
-                  </div>
-                  <div className="sheet-panel sheet-panel--table">
-                    <ListaReceitas receitas={data.receitas} onDelete={handleDeleteReceita} />
+                <div className="receitas-view">
+                  <div className="view-grid">
+                    <div className="form-section">
+                      <h3>Adicionar Receita</h3>
+                      <ReceitasForm onAdd={handleAddReceita} />
+                    </div>
+                    <div className="table-section">
+                      <h3>Lista de Receitas</h3>
+                      <ListaReceitas receitas={data.receitas} onDelete={handleDeleteReceita} />
+                    </div>
                   </div>
                 </div>
               )}
 
               {activeTab === 'gastos' && (
-                <div className="sheet-grid sheet-grid--stacked">
-                  <div className="sheet-panel sheet-panel--form">
-                    <div className="forms-grid">
+                <div className="gastos-view">
+                  <div className="forms-section">
+                    <div className="form-card">
+                      <h3>Gastos no Cartão</h3>
                       <GastosCartaoForm onAdd={handleAddGastoCartao} />
+                    </div>
+                    <div className="form-card">
+                      <h3>Gastos no Débito</h3>
                       <GastosDebitoForm onAdd={handleAddGastoDebito} />
                     </div>
                   </div>
-                  <div className="sheet-panel sheet-panel--table">
+                  <div className="table-section">
+                    <h3>Lista de Gastos</h3>
                     <ListaGastos
                       gastosCartao={data.gastosCartao}
                       gastosDebito={data.gastosDebito}
@@ -398,10 +367,9 @@ function App() {
             </>
           )}
         </div>
-      </section>
+      </main>
     </div>
   );
 }
 
 export default App;
-

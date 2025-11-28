@@ -32,6 +32,7 @@ import './Dashboard.css';
 
 interface DashboardProps {
   data: FinancasData;
+  initialPage?: DashboardPage;
 }
 
 type StatusCartaoFiltro = 'todos' | 'pagos' | 'abertos';
@@ -39,7 +40,7 @@ type GraficoTab = 'comparativo' | 'distribuicao' | 'capacidade' | 'tendencia' | 
 type DashboardPage = 'resumo' | 'projecoes' | 'insights';
 type ResumoView = 'principal' | 'comparar' | 'tabela';
 
-export default function Dashboard({ data }: DashboardProps) {
+export default function Dashboard({ data, initialPage }: DashboardProps) {
   const [mesFiltro, setMesFiltro] = useState<string>('');
   const [periodoMeses, setPeriodoMeses] = useState(12);
   const [statusCartaoFiltro, setStatusCartaoFiltro] = useState<StatusCartaoFiltro>('todos');
@@ -51,9 +52,15 @@ export default function Dashboard({ data }: DashboardProps) {
   const [mesesComparacao, setMesesComparacao] = useState<string[]>([]);
   const [dropdownAberto, setDropdownAberto] = useState(false);
   const [abaGraficos, setAbaGraficos] = useState<GraficoTab>('comparativo');
-  const [paginaAtual, setPaginaAtual] = useState<DashboardPage>('resumo');
+  const [paginaAtual, setPaginaAtual] = useState<DashboardPage>(initialPage || 'resumo');
   const [resumoView, setResumoView] = useState<ResumoView>('principal');
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (initialPage) {
+      setPaginaAtual(initialPage);
+    }
+  }, [initialPage]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -165,6 +172,15 @@ export default function Dashboard({ data }: DashboardProps) {
       mesesParaCalcular
     )
   );
+  const analisePadrao: AnalisePagamento = {
+    mes: mesAtual,
+    faturaTotal: 0,
+    receitas: 0,
+    saldoDisponivel: 0,
+    podePagar: true,
+    percentualCobertura: 0,
+    mesesRestantes: 0,
+  };
 
   // Dados para gráfico de capacidade de pagamento
   const dadosCapacidadePagamento = analisesPagamento.map(analise => ({
@@ -509,7 +525,7 @@ export default function Dashboard({ data }: DashboardProps) {
   const mesesCriticos = saldoAcumulado.filter(m => m.saldo < 0);
   
   // Calcular estratégia de pagamento
-  const mesAtualAnalise = analisesPagamento.find(a => a.mes === mesAtual) || analisesPagamento[0];
+  const mesAtualAnalise = analisesPagamento.find(a => a.mes === mesAtual) || analisesPagamento[0] || analisePadrao;
 
   return (
     <div className="dashboard">
@@ -581,20 +597,24 @@ export default function Dashboard({ data }: DashboardProps) {
         </div>
       </div>
 
-      <div className="dashboard-pages-nav">
-        {paginasDashboard.map(page => (
-          <button
-            key={page.id}
-            className={paginaAtual === page.id ? 'active' : ''}
-            onClick={() => setPaginaAtual(page.id)}
-            type="button"
-          >
-            {page.label}
-          </button>
-        ))}
-      </div>
-      {paginaAtivaInfo && (
-        <p className="dashboard-pages-hint">{paginaAtivaInfo.descricao}</p>
+      {!initialPage && (
+        <>
+          <div className="dashboard-pages-nav">
+            {paginasDashboard.map(page => (
+              <button
+                key={page.id}
+                className={paginaAtual === page.id ? 'active' : ''}
+                onClick={() => setPaginaAtual(page.id)}
+                type="button"
+              >
+                {page.label}
+              </button>
+            ))}
+          </div>
+          {paginaAtivaInfo && (
+            <p className="dashboard-pages-hint">{paginaAtivaInfo.descricao}</p>
+          )}
+        </>
       )}
 
       {paginaAtual === 'resumo' && (
