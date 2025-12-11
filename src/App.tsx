@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { FinancasData } from './types';
-import { loadData, addReceita, addGastoCartao, addGastoDebito, deleteReceita as deleteReceitaDB, deleteGastoCartao as deleteGastoCartaoDB, deleteGastoDebito as deleteGastoDebitoDB, updateGastoCartaoPago, updateReceita, updateGastoCartao, updateGastoDebito } from './utils/storage';
+import { loadData, addReceita, addGastoCartao, addGastoDebito, deleteReceita as deleteReceitaDB, deleteGastoCartao as deleteGastoCartaoDB, deleteGastoDebito as deleteGastoDebitoDB, updateGastoCartaoPago, updateReceita, updateGastoCartao, updateGastoDebito, addGastoCartaoDireto } from './utils/storage';
 import { GastoCartao } from './types';
 import { getTodosMesesComDados, formatMes } from './utils/calculations';
 import { importarGastosCartaoCSV, lerArquivoCSV } from './utils/importCartaoCSV';
@@ -616,14 +616,15 @@ function App() {
                                   await deleteGastoCartaoDB(id);
                                 }
 
-                                // Adicionar novos gastos
+                                // Limpar estado local antes de inserir
                                 setData(prev => ({
                                   ...prev,
                                   gastosCartao: [],
                                 }));
 
+                                // Inserir cada gasto exatamente como veio do CSV (sem redividir parcelas)
                                 for (const gasto of novosGastos) {
-                                  await addGastoCartao(gasto);
+                                  await addGastoCartaoDireto(gasto);
                                 }
 
                                 // Recarregar dados

@@ -352,6 +352,46 @@ export const addGastoCartao = async (gasto: GastoCartao): Promise<void> => {
   }
 };
 
+// Adicionar gasto no cartão exatamente como recebido (sem gerar parcelas)
+export const addGastoCartaoDireto = async (gasto: GastoCartao): Promise<void> => {
+  const gastoComTimestamp = {
+    ...gasto,
+    createdAt: gasto.createdAt || new Date().toISOString(),
+  };
+
+  const dataLocal = loadDataLocal();
+  dataLocal.gastosCartao.push(gastoComTimestamp);
+  saveDataLocal(dataLocal);
+
+  if (!supabaseAvailable || !supabase) {
+    return;
+  }
+
+  try {
+    const { error } = await supabase!
+      .from('gastos_cartao')
+      .insert({
+        id: gastoComTimestamp.id,
+        descricao: gastoComTimestamp.descricao,
+        valor_total: gastoComTimestamp.valorTotal,
+        parcelas: gastoComTimestamp.parcelas,
+        parcela_atual: gastoComTimestamp.parcelaAtual,
+        valor_parcela: gastoComTimestamp.valorParcela,
+        data_inicio: gastoComTimestamp.dataInicio,
+        mes: gastoComTimestamp.mes,
+        pago: gastoComTimestamp.pago,
+        valor_pago: gastoComTimestamp.valorPago || null,
+        created_at: gastoComTimestamp.createdAt,
+      });
+
+    if (error) throw error;
+  } catch (error: any) {
+    if (!isConnectionError(error)) {
+      console.error('❌ Erro ao adicionar gasto no cartão (direto) no Supabase:', error);
+    }
+  }
+};
+
 // Função para adicionar um gasto no débito
 export const addGastoDebito = async (gasto: GastoDebito): Promise<void> => {
   // Adicionar timestamp se não existir
