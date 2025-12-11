@@ -232,7 +232,6 @@ export const saveData = async (data: FinancasData): Promise<void> => {
         data_inicio: g.dataInicio,
         mes: g.mes,
         pago: g.pago,
-        valor_pago: g.valorPago || null,
         updated_at: new Date().toISOString(),
       }));
 
@@ -340,7 +339,6 @@ export const addGastoCartao = async (gasto: GastoCartao): Promise<void> => {
         data_inicio: gastoComTimestamp.dataInicio,
         mes: gastoComTimestamp.mes,
         pago: gastoComTimestamp.pago,
-        valor_pago: gastoComTimestamp.valorPago || null,
       });
 
     if (error) throw error;
@@ -380,7 +378,7 @@ export const addGastoCartaoDireto = async (gasto: GastoCartao): Promise<void> =>
         data_inicio: gastoComTimestamp.dataInicio,
         mes: gastoComTimestamp.mes,
         pago: gastoComTimestamp.pago,
-        valor_pago: gastoComTimestamp.valorPago || null,
+        // coluna valor_pago não existe no Supabase atual
         created_at: gastoComTimestamp.createdAt,
       });
 
@@ -730,7 +728,6 @@ export const updateGastoCartao = async (gasto: GastoCartao): Promise<void> => {
         data_inicio: gasto.dataInicio,
         mes: gasto.mes,
         pago: gasto.pago,
-        valor_pago: gasto.valorPago || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', gasto.id);
