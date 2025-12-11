@@ -623,9 +623,13 @@ function App() {
                                 }));
 
                                 // Inserir cada gasto exatamente como veio do CSV (sem redividir parcelas)
-                                for (const gasto of novosGastos) {
-                                  await addGastoCartaoDireto(gasto);
-                                }
+                                await Promise.all(novosGastos.map(g => addGastoCartaoDireto(g)));
+
+                                // Atualizar imediatamente a UI com os novos gastos importados
+                                setData(prev => ({
+                                  ...prev,
+                                  gastosCartao: [...novosGastos],
+                                }));
 
                                 // Recarregar dados
                                 const loadedData = await loadData();
