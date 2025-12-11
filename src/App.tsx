@@ -606,6 +606,10 @@ function App() {
                                 const csvContent = await lerArquivoCSV(arquivo);
                                 const novosGastos = importarGastosCartaoCSV(csvContent);
 
+                                if (!novosGastos || novosGastos.length === 0) {
+                                  throw new Error('Nenhum gasto encontrado no CSV.');
+                                }
+
                                 // Deletar todos os gastos no cartão existentes
                                 const idsParaDeletar = data.gastosCartao.map(g => g.id);
                                 for (const id of idsParaDeletar) {

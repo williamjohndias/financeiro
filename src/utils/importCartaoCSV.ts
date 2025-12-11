@@ -32,7 +32,9 @@ const getMesFromData = (data: string): string => {
 
 // Função para importar gastos do cartão a partir de um CSV
 export const importarGastosCartaoCSV = (csvContent: string): GastoCartao[] => {
-  const linhas = csvContent.split('\n').filter(linha => linha.trim());
+  // Normalizar quebras de linha (\r\n e \n) e remover BOM
+  const normalizado = csvContent.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const linhas = normalizado.split('\n').filter(linha => linha.trim());
   
   if (linhas.length < 2) {
     throw new Error('CSV vazio ou inválido');
@@ -50,7 +52,10 @@ export const importarGastosCartaoCSV = (csvContent: string): GastoCartao[] => {
 
   // Processar cada linha do CSV
   dados.forEach(linha => {
-    // Dividir por vírgula, mas respeitando aspas
+    // Permitir separador vírgula ou ponto-e-vírgula
+    const separador = linha.includes(';') && !linha.includes(',') ? ';' : ',';
+
+    // Dividir respeitando aspas
     const colunas: string[] = [];
     let atual = '';
     let dentroAspas = false;
@@ -59,7 +64,7 @@ export const importarGastosCartaoCSV = (csvContent: string): GastoCartao[] => {
       const char = linha[i];
       if (char === '"') {
         dentroAspas = !dentroAspas;
-      } else if (char === ',' && !dentroAspas) {
+      } else if (char === separador && !dentroAspas) {
         colunas.push(atual.trim());
         atual = '';
       } else {
@@ -105,6 +110,11 @@ export const importarGastosCartaoCSV = (csvContent: string): GastoCartao[] => {
       createdAt: new Date().toISOString(),
     });
   });
+
+  // Se nada foi importado, lançar erro para feedback ao usuário
+  if (gastos.length === 0) {
+    throw new Error('Nenhum gasto foi importado. Verifique o separador (vírgula ou ponto-e-vírgula) e o cabeçalho do CSV.');
+  }
 
   return gastos;
 };
