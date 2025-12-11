@@ -58,7 +58,7 @@ export default function GastosDebitoForm({ onAdd, onUpdate, gastoEditando, onCan
 
     setDescricao('');
     setValor('');
-    setData(getDataHojeMenosUmDia());
+    setData(getDataHoje());
     setMes(getMesAtual());
   };
 
